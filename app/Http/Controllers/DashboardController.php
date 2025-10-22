@@ -40,13 +40,22 @@ class DashboardController extends Controller
                             ->take(5)
                             ->get();
 
+        // Get all tugas for difficulty stats
+        $allTugas = Tugas::whereIn('mapel_id', $mapels->pluck('id'))->get();
+        $difficultyStats = [
+            'mudah' => $allTugas->where('tingkat_kesulitan', 'mudah')->count(),
+            'normal' => $allTugas->where('tingkat_kesulitan', 'normal')->count(),
+            'susah' => $allTugas->where('tingkat_kesulitan', 'susah')->count(),
+        ];
+
         return view('dashboard', compact(
             'mapels', 
             'totalMapels', 
             'totalMateri', 
             'totalTugas',
             'recentMateri',
-            'recentTugas'
+            'recentTugas',
+            'difficultyStats'
         ));
     }
 }

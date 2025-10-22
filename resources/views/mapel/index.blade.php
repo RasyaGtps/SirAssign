@@ -7,82 +7,84 @@
             <!-- Header Section -->
             <div class="text-center mb-10">
                 <div class="mb-4">
-                    <i class="fas fa-graduation-cap text-6xl" style="color: #570C49;"></i>
+                    <i class="fas fa-book-open text-6xl" style="color: #570C49;"></i>
                 </div>
                 <h1 class="text-4xl font-bold mb-3" style="color: #570C49;">
-                    Mata Pelajaran Saya
+                    📚 Mata Pelajaran Saya
                 </h1>
-                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-                    Daftar mata pelajaran yang Anda ajar dan dokumentasi tugas yang tersedia
+                <p class="text-gray-700 text-lg max-w-2xl mx-auto font-medium">
+                    Daftar mata pelajaran yang Anda ajar dan dokumentasi pembelajaran
                 </p>
             </div>
 
             <!-- Stats Section -->
-            <div class="max-w-6xl mx-auto mb-8">
+            <div class="max-w-7xl mx-auto mb-8">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4" style="border-left-color: #570C49;">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-book text-3xl" style="color: #570C49;"></i>
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-100 text-sm font-medium mb-1">Mata Pelajaran</p>
+                                <p class="text-4xl font-bold">{{ $mapels->count() }}</p>
+                                <p class="text-purple-200 text-xs mt-1">Total mapel Anda</p>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Total Mata Pelajaran</p>
-                                <p class="text-2xl font-bold" style="color: #570C49;">{{ $mapels->count() }}</p>
+                            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                                <i class="fas fa-book text-3xl"></i>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-500">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-folder-open text-3xl text-blue-600"></i>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Total Materi</p>
-                                <p class="text-2xl font-bold text-blue-600">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100 text-sm font-medium mb-1">Total Materi</p>
+                                <p class="text-4xl font-bold">
                                     {{ $mapels->sum(function ($mapel) {return $mapel->materi->count();}) }}
                                 </p>
+                                <p class="text-blue-200 text-xs mt-1">Dokumen pembelajaran</p>
                             </div>
-
+                            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                                <i class="fas fa-file-pdf text-3xl"></i>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-green-500">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <i class="fas fa-tasks text-3xl text-green-500"></i>
+                    <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-100 text-sm font-medium mb-1">Total Tugas</p>
+                                <p class="text-4xl font-bold">
+                                    {{ $mapels->sum(function ($mapel) {return $mapel->tugas->count();}) }}
+                                </p>
+                                <p class="text-green-200 text-xs mt-1">Assignment dibuat</p>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Total Tugas</p>
-                                <p class="text-2xl font-bold text-green-600">
-                                    {{ $mapels->sum(function ($mapel) {return $mapel->tugas->count();}) }}</p>
+                            <div class="bg-white bg-opacity-20 rounded-full p-4">
+                                <i class="fas fa-tasks text-3xl"></i>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Action Bar -->
-            <div class="max-w-6xl mx-auto mb-8">
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="text-center">
-                        <h2 class="text-xl font-bold text-gray-800">Daftar Mata Pelajaran Yang Anda Ajar</h2>
-                        <p class="text-gray-600">Lihat dan kelola mata pelajaran yang ditugaskan kepada Anda</p>
+            <!-- Section Header -->
+            <div class="max-w-7xl mx-auto mb-6">
+                <div class="flex items-center">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-3 mr-3">
+                        <i class="fas fa-list text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Daftar Mata Pelajaran</h2>
+                        <p class="text-sm text-gray-600">{{ $mapels->count() }} mata pelajaran yang Anda ajar</p>
                     </div>
                 </div>
             </div>
 
             <!-- Success Message -->
             @if (session('success'))
-                <div class="max-w-6xl mx-auto mb-8">
-                    <div class="bg-green-50 border-l-4 border-green-500 p-6 rounded-r-xl">
+                <div class="max-w-7xl mx-auto mb-6">
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-xl shadow-lg">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <svg class="h-6 w-6 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
+                            <div class="flex-shrink-0 bg-green-500 rounded-full p-2">
+                                <i class="fas fa-check text-white text-xl"></i>
                             </div>
                             <div class="ml-4">
                                 <p class="text-lg font-bold text-green-800">✅ Berhasil!</p>
@@ -94,28 +96,34 @@
             @endif
 
             <!-- Mapel Cards -->
-            <div class="max-w-6xl mx-auto">
+            <div class="max-w-7xl mx-auto">
                 @forelse($mapels as $mapel)
                     <div
                         class="bg-white rounded-3xl shadow-xl mb-6 overflow-hidden hover:shadow-2xl transition duration-300 transform hover:scale-[1.02]">
 
                         <!-- Card Header -->
-                        <div class="px-8 py-6" style="background: linear-gradient(135deg, #570C49 0%, #6B1B47 100%);">
-                            <div class="flex items-center justify-between">
+                        <div class="px-8 py-6 bg-gradient-to-r from-purple-600 to-purple-800">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <div class="flex items-center space-x-4">
-                                    <div class="flex-shrink-0">
+                                    <div class="flex-shrink-0 bg-white bg-opacity-20 rounded-2xl p-4">
                                         <i class="fas fa-book text-4xl text-white"></i>
                                     </div>
                                     <div>
-                                        <h3 class="text-2xl font-bold text-white">{{ $mapel->nama_mapel }}</h3>
-                                        <p class="text-purple-100 text-sm mt-1">Mata Pelajaran</p>
+                                        <h3 class="text-2xl font-bold text-white mb-1">{{ $mapel->nama_mapel }}</h3>
+                                        <p class="text-purple-200 text-sm">Mata Pelajaran</p>
                                     </div>
                                 </div>
-                                <div class="flex items-center space-x-2">
-                                    <span
-                                        class="px-4 py-2 bg-white bg-opacity-20 text-white font-bold rounded-full text-sm">
-                                        {{ $mapel->materi->count() + $mapel->tugas->count() }} Total Item
-                                    </span>
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-blue-500 bg-opacity-90 px-4 py-2 rounded-xl flex items-center space-x-2">
+                                        <i class="fas fa-file-pdf text-white text-xl"></i>
+                                        <span class="text-white font-bold text-lg">{{ $mapel->materi->count() }}</span>
+                                        <span class="text-blue-100 text-sm">Materi</span>
+                                    </div>
+                                    <div class="bg-green-500 bg-opacity-90 px-4 py-2 rounded-xl flex items-center space-x-2">
+                                        <i class="fas fa-clipboard-list text-white text-xl"></i>
+                                        <span class="text-white font-bold text-lg">{{ $mapel->tugas->count() }}</span>
+                                        <span class="text-green-100 text-sm">Tugas</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -199,14 +207,18 @@
                     </div>
                 @empty
                     <!-- Empty State -->
-                    <div class="bg-white rounded-3xl shadow-xl p-12 text-center">
+                    <div class="bg-white rounded-3xl shadow-xl p-16 text-center">
                         <div class="mb-6">
-                            <i class="fas fa-graduation-cap text-8xl" style="color: #570C49;"></i>
+                            <i class="fas fa-book-open text-8xl text-gray-300"></i>
                         </div>
-                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Belum Ada Mata Pelajaran</h3>
-                        <p class="text-gray-600 text-lg mb-8 max-w-md mx-auto">
+                        <h3 class="text-3xl font-bold text-gray-800 mb-4">Belum Ada Mata Pelajaran</h3>
+                        <p class="text-gray-600 text-lg mb-6 max-w-md mx-auto">
                             Anda belum ditugaskan untuk mengajar mata pelajaran apapun. Silakan hubungi administrator sekolah.
                         </p>
+                        <div class="inline-block px-6 py-3 bg-purple-100 text-purple-700 rounded-lg">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <span class="font-medium">Hubungi Admin untuk Penugasan</span>
+                        </div>
                     </div>
                 @endforelse
             </div>

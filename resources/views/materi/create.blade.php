@@ -7,25 +7,14 @@
         <!-- Header Section -->
         <div class="text-center mb-10">
             <div class="mb-4">
-                <i class="fas fa-book-open text-6xl" style="color: #570C49;"></i>
+                <i class="fas fa-cloud-upload-alt text-6xl" style="color: #570C49;"></i>
             </div>
             <h1 class="text-4xl font-bold mb-3" style="color: #570C49;">
-                Upload Materi Baru
+                📤 Upload Materi Baru
             </h1>
-            <p class="text-gray-600 text-lg max-w-md mx-auto">
+            <p class="text-gray-700 text-lg max-w-md mx-auto font-medium">
                 Tambahkan materi pembelajaran baru ke dalam sistem
             </p>
-        </div>
-
-        <!-- Navigation Breadcrumb -->
-        <div class="max-w-3xl mx-auto mb-8">
-            <nav class="flex items-center space-x-2 text-sm">
-                <a href="{{ route('materi.index') }}" class="text-gray-500 hover:text-gray-700 transition">
-                    <i class="fas fa-book-open mr-1"></i> Materi
-                </a>
-                <span class="text-gray-400">•</span>
-                <span class="text-gray-900 font-medium">Upload Baru</span>
-            </nav>
         </div>
 
         <!-- Main Form Card -->
@@ -33,17 +22,20 @@
             <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
                 
                 <!-- Card Header -->
-                <div class="px-8 py-6 border-b border-gray-100" style="background: linear-gradient(135deg, #570C49 0%, #6B1B47 100%);">
+                <div class="px-8 py-6 bg-gradient-to-r from-purple-600 to-purple-800">
                     <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-xl font-bold text-white">Form Upload Materi</h2>
-                            <p class="text-purple-100 text-sm mt-1">Lengkapi informasi materi yang akan di-upload</p>
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-white bg-opacity-20 rounded-xl p-3">
+                                <i class="fas fa-file-upload text-white text-2xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold text-white">Form Upload Materi</h2>
+                                <p class="text-purple-200 text-sm mt-1">Lengkapi informasi materi yang akan di-upload</p>
+                            </div>
                         </div>
-                        <a href="{{ route('materi.index') }}" 
-                           class="inline-flex items-center px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition duration-300">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                            </svg>
+                        <a href="{{ url()->previous() }}" 
+                           class="inline-flex items-center px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold rounded-lg transition duration-300 border-2 border-white border-opacity-30">
+                            <i class="fas fa-arrow-left mr-2"></i>
                             Kembali
                         </a>
                     </div>
@@ -54,12 +46,10 @@
                 
                     <!-- Error Messages -->
                     @if($errors->any())
-                        <div class="bg-red-50 border-l-4 border-red-500 p-6 mb-8 rounded-r-xl">
+                        <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-6 mb-8 rounded-xl shadow-lg">
                             <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-6 w-6 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                    </svg>
+                                <div class="flex-shrink-0 bg-red-500 rounded-full p-2">
+                                    <i class="fas fa-exclamation-triangle text-white text-xl"></i>
                                 </div>
                                 <div class="ml-4">
                                     <h3 class="text-lg font-bold text-red-800 mb-3">⚠️ Terdapat Kesalahan</h3>
@@ -227,25 +217,25 @@
                         </div>
 
                         <!-- Submit Section -->
-                        <div class="pt-6 border-t border-gray-100">
+                        <div class="pt-6 border-t-2 border-gray-100">
                             <div class="flex flex-col sm:flex-row gap-4">
-                                <a href="{{ route('materi.index') }}" 
-                                   class="flex-1 py-4 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition duration-300 text-center border-2 border-gray-200 hover:border-gray-300">
+                                <a href="{{ url()->previous() }}" 
+                                   class="flex-1 py-4 px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition duration-300 text-center border-2 border-gray-300 hover:border-gray-400 shadow-md hover:shadow-lg">
                                     <i class="fas fa-times mr-2"></i> Batal
                                 </a>
                                 <button type="submit" 
-                                        class="flex-1 py-4 px-6 text-white font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition duration-300"
-                                        style="background: linear-gradient(135deg, #570C49 0%, #8B1538 50%, #B91C5C 100%);">
+                                        class="flex-1 py-4 px-6 bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition duration-300">
                                     <span class="flex items-center justify-center">
-                                        <i class="fas fa-rocket mr-2"></i>
+                                        <i class="fas fa-cloud-upload-alt mr-2 text-xl"></i>
                                         Upload Materi
                                     </span>
                                 </button>
                             </div>
                             
                             <!-- Help Text -->
-                            <div class="mt-4 text-center">
-                                <p class="text-sm text-gray-500">
+                            <div class="mt-6 text-center bg-purple-50 rounded-xl p-4 border-2 border-purple-200">
+                                <p class="text-sm text-purple-700 font-medium">
+                                    <i class="fas fa-info-circle mr-2"></i>
                                     Pastikan semua informasi sudah benar sebelum mengupload materi
                                 </p>
                             </div>

@@ -1,209 +1,224 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen" style="background-color: #FFE693;">
-    <div class="container mx-auto px-6 py-8">
-        <!-- Header Section -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold mb-4" style="color: #570C49;">
-                <i class="fas fa-tasks mr-3"></i>Manajemen Tugas
-            </h1>
-            <p class="text-gray-700 text-lg mb-6">Kelola semua tugas dengan analisis tingkat kesulitan otomatis</p>
+<div class="min-h-screen py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
             
-            <div class="flex justify-center">
-                <a href="{{ route('tugas.create') }}" 
-                   class="inline-flex items-center px-8 py-4 text-white font-bold text-lg rounded-xl shadow-lg hover:scale-105 transform transition duration-300"
-                   style="background: linear-gradient(135deg, #570C49 0%, #8B1538 100%);">
-                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Tambah Tugas Baru
-                </a>
-            </div>
-        </div>
-
-        <!-- Alert Messages -->
-        @if(session('success'))
-            <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-r-lg">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-green-700 font-medium">{{ session('success') }}</p>
-                    </div>
+            <!-- Header Section -->
+            <div class="text-center mb-10">
+                <div class="mb-4">
+                    <i class="fas fa-clipboard-list text-6xl" style="color: #570C49;"></i>
                 </div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-red-700 font-medium">{{ session('error') }}</p>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        <!-- Stats Card -->
-        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 border-t-4" style="border-color: #570C49;">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-700">Total Tugas Tersimpan</h3>
-                    <p class="text-3xl font-bold mt-2" style="color: #570C49;">{{ $tugas->count() }}</p>
-                </div>
-                <div class="text-6xl" style="color: #570C49;">
-                    <i class="fas fa-tasks"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tugas Grid -->
-        @if($tugas->count() > 0)
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                @foreach($tugas as $item)
-                    <div class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition duration-300 overflow-hidden">
-                        <!-- Card Header -->
-                        <div class="p-6 border-b border-gray-100">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ $item->judul }}</h3>
-                                    <div class="flex items-center gap-2 mb-3">
-                                        @if($item->mapel)
-                                            <span class="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800">
-                                                <i class="fas fa-book mr-1"></i>
-                                                {{ $item->mapel->nama_mapel }}
-                                            </span>
-                                        @endif
-                                        <span class="text-sm text-gray-500">
-                                            <i class="fas fa-calendar mr-1"></i>
-                                            {{ $item->created_at->format('d/m/Y') }}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <!-- Tingkat Kesulitan Badge -->
-                                <div class="ml-4">
-                                    @if($item->tingkat_kesulitan)
-                                        @if($item->tingkat_kesulitan == 'mudah')
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                                <i class="fas fa-smile mr-1"></i>
-                                                Mudah
-                                            </span>
-                                        @elseif($item->tingkat_kesulitan == 'normal')
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                                                <i class="fas fa-meh mr-1"></i>
-                                                Normal
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                                                <i class="fas fa-frown mr-1"></i>
-                                                Susah
-                                            </span>
-                                        @endif
-                                    @else
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-                                            <i class="fas fa-question mr-1"></i>
-                                            Belum Dianalisis
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Card Body - Soal/Pertanyaan -->
-                        <div class="p-6">
-                            <div class="mb-4">
-                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Soal/Pertanyaan:</h4>
-                                <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-blue-500">
-                                    <p class="text-gray-800 text-sm leading-relaxed">
-                                        {{ Str::limit($item->pertanyaan, 200) }}
-                                    </p>
-                                    @if(strlen($item->pertanyaan) > 200)
-                                        <button onclick="toggleFullText({{ $item->id }})" 
-                                                class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2">
-                                            Lihat Selengkapnya...
-                                        </button>
-                                        <div id="fullText{{ $item->id }}" class="hidden mt-2">
-                                            <p class="text-gray-800 text-sm leading-relaxed">
-                                                {{ $item->pertanyaan }}
-                                            </p>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <!-- Similarity Score & Matched Materials -->
-                            @if($item->similarity_score)
-                                <div class="border-t border-gray-100 pt-4">
-                                    <div class="flex items-center justify-between text-sm">
-                                        <div class="flex items-center">
-                                            <span class="text-gray-600">Kemiripan dengan Materi:</span>
-                                            <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                                                {{ number_format($item->similarity_score * 100, 1) }}%
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
-
-                        <!-- Card Footer -->
-                        <div class="px-6 py-4 bg-gray-50 border-t flex justify-between items-center">
-                            <!-- Edit Button -->
-                            <a href="{{ route('tugas.edit', $item->id) }}" 
-                               class="inline-flex items-center px-4 py-2 text-white text-sm font-medium rounded-lg transition duration-300 hover:scale-105"
-                               style="background: linear-gradient(135deg, #570C49 0%, #8B1538 100%);">
-                                <i class="fas fa-edit mr-2"></i>
-                                Edit
-                            </a>
-                            
-                            <!-- Delete Button -->
-                            <form action="{{ route('tugas.destroy', $item->id) }}" 
-                                  method="POST" 
-                                  class="inline"
-                                  onsubmit="return confirm('Yakin ingin menghapus tugas ini?')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" 
-                                        class="inline-flex items-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition duration-300">
-                                    <i class="fas fa-trash mr-2"></i>
-                                    Hapus
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <!-- Empty State -->
-            <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
-                <div class="text-8xl mb-6" style="color: #570C49;">
-                    <i class="fas fa-tasks"></i>
-                </div>
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Belum Ada Tugas</h3>
-                <p class="text-gray-600 mb-8 max-w-md mx-auto">
-                    Mulai buat tugas dan soal pertama Anda untuk melihatnya di sini. 
-                    Sistem akan secara otomatis menganalisis tingkat kesulitan berdasarkan materi yang telah diajarkan.
+                <h1 class="text-4xl font-bold mb-3" style="color: #570C49;">
+                    📝 Manajemen Tugas
+                </h1>
+                <p class="text-gray-700 text-lg max-w-2xl mx-auto font-medium">
+                    Kelola semua tugas dengan analisis tingkat kesulitan otomatis
                 </p>
-                <a href="{{ route('tugas.create') }}" 
-                   class="inline-flex items-center px-6 py-3 text-white font-semibold rounded-xl shadow-lg hover:scale-105 transform transition duration-300"
-                   style="background: linear-gradient(135deg, #570C49 0%, #8B1538 100%);">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Buat Tugas Pertama
-                </a>
             </div>
-        @endif
+
+            <!-- Alert Messages -->
+            @if(session('success'))
+                <div class="mb-6">
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-xl shadow-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-green-500 rounded-full p-2">
+                                <i class="fas fa-check text-white text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-lg font-bold text-green-800">✅ Berhasil!</p>
+                                <p class="text-green-700">{{ session('success') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-6">
+                    <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-5 rounded-xl shadow-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-red-500 rounded-full p-2">
+                                <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-lg font-bold text-red-800">⚠️ Error!</p>
+                                <p class="text-red-700">{{ session('error') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Stats & Action -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Stats Card -->
+                <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-100 text-sm font-medium mb-1">Total Tugas</p>
+                            <p class="text-4xl font-bold">{{ $tugas->count() }}</p>
+                            <p class="text-green-200 text-xs mt-1">Assignment dibuat</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center">
+                            <i class="fas fa-clipboard-list text-4xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Action -->
+                <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                    <div class="flex items-center justify-between h-full">
+                        <div>
+                            <p class="text-purple-100 text-sm font-medium mb-2">Tambahkan Tugas Baru</p>
+                            <p class="text-white text-base mb-3">Buat assignment dengan AI</p>
+                        </div>
+                        <a href="{{ route('tugas.create') }}" 
+                           class="bg-white text-purple-600 font-bold px-6 py-3 rounded-xl hover:bg-opacity-90 transition duration-300 shadow-lg hover:shadow-xl">
+                            <i class="fas fa-plus mr-2"></i>
+                            Buat
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tugas Grid -->
+            @if($tugas->count() > 0)
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    @foreach($tugas as $item)
+                        <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 border-2 border-gray-100 hover:border-green-300">
+                            <!-- Card Header -->
+                            <div class="p-6 bg-gradient-to-br from-green-50 to-white border-b-2 border-gray-100">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex-1">
+                                        <h3 class="text-xl font-bold text-gray-800 mb-3">{{ $item->judul }}</h3>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            @if($item->mapel)
+                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-purple-100 text-purple-700">
+                                                    <i class="fas fa-book mr-1"></i>
+                                                    {{ $item->mapel->nama_mapel }}
+                                                </span>
+                                            @endif
+                                            @if($item->similarity_score)
+                                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-700">
+                                                    <i class="fas fa-percentage mr-1"></i>
+                                                    {{ round($item->similarity_score * 100, 1) }}%
+                                                </span>
+                                            @endif
+                                            <span class="text-xs text-gray-500 flex items-center">
+                                                <i class="far fa-calendar mr-1"></i>
+                                                {{ $item->created_at->format('d/m/Y') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Tingkat Kesulitan Badge -->
+                                    <div class="ml-4">
+                                        @if($item->tingkat_kesulitan)
+                                            @if($item->tingkat_kesulitan == 'mudah')
+                                                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-green-500 text-white shadow-md">
+                                                    <i class="fas fa-smile mr-1"></i>
+                                                    Mudah
+                                                </span>
+                                            @elseif($item->tingkat_kesulitan == 'normal')
+                                                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-yellow-500 text-white shadow-md">
+                                                    <i class="fas fa-meh mr-1"></i>
+                                                    Normal
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-red-500 text-white shadow-md">
+                                                    <i class="fas fa-frown mr-1"></i>
+                                                    Susah
+                                                </span>
+                                            @endif
+                                        @else
+                                            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gray-400 text-white shadow-md">
+                                                <i class="fas fa-question mr-1"></i>
+                                                N/A
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Body - Soal/Pertanyaan -->
+                            <div class="p-6">
+                                <div>
+                                    <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                                        <i class="fas fa-question-circle mr-2 text-green-600"></i>
+                                        Soal/Pertanyaan:
+                                    </h4>
+                                    <div class="bg-gradient-to-br from-gray-50 to-white rounded-xl p-4 border-2 border-green-200">
+                                        <p class="text-gray-800 text-sm leading-relaxed">
+                                            {{ Str::limit($item->pertanyaan, 200) }}
+                                        </p>
+                                        @if(strlen($item->pertanyaan) > 200)
+                                            <button onclick="toggleFullText({{ $item->id }})" 
+                                                    class="text-green-600 hover:text-green-800 text-sm font-bold mt-3">
+                                                <i class="fas fa-angle-down mr-1"></i>
+                                                Lihat Selengkapnya...
+                                            </button>
+                                            <div id="fullText{{ $item->id }}" class="hidden mt-2">
+                                                <p class="text-gray-800 text-sm leading-relaxed">
+                                                    {{ $item->pertanyaan }}
+                                                </p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Footer -->
+                            <div class="px-6 py-4 bg-white border-t-2 border-gray-100 flex justify-between items-center gap-2">
+                                <!-- View Button -->
+                                <a href="{{ route('tugas.show', $item->id) }}" 
+                                   class="flex-1 inline-flex items-center justify-center px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-sm font-bold rounded-lg transition duration-300 shadow-md hover:shadow-lg">
+                                    <i class="fas fa-eye mr-2"></i>
+                                    Lihat
+                                </a>
+                                
+                                <!-- Edit Button -->
+                                <a href="{{ route('tugas.edit', $item->id) }}" 
+                                   class="inline-flex items-center justify-center px-3 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold rounded-lg transition duration-300 shadow-md hover:shadow-lg">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <!-- Delete Button -->
+                                <form action="{{ route('tugas.destroy', $item->id) }}" 
+                                      method="POST" 
+                                      class="inline"
+                                      onsubmit="return confirm('Yakin ingin menghapus tugas ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" 
+                                            class="inline-flex items-center justify-center px-3 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-lg transition duration-300 shadow-md hover:shadow-lg">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <!-- Empty State -->
+                <div class="bg-white rounded-3xl shadow-xl p-16 text-center">
+                    <div class="mb-6">
+                        <i class="fas fa-clipboard-list text-8xl text-gray-300"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-800 mb-4">Belum Ada Tugas</h3>
+                    <p class="text-gray-600 text-lg mb-8 max-w-md mx-auto">
+                        Mulai buat tugas dan soal pertama Anda untuk melihatnya di sini. 
+                        Sistem akan secara otomatis menganalisis tingkat kesulitan berdasarkan materi yang telah diajarkan.
+                    </p>
+                    <a href="{{ route('tugas.create') }}" 
+                       class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl transition duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                        <i class="fas fa-pen-fancy text-xl mr-3"></i>
+                        <span>Buat Tugas Pertama</span>
+                    </a>
+                </div>
+            @endif
+        </div>
     </div>
 </div>
 @endsection
@@ -216,15 +231,11 @@ function toggleFullText(id) {
     
     if (fullTextDiv.classList.contains('hidden')) {
         fullTextDiv.classList.remove('hidden');
-        button.textContent = 'Lihat Lebih Sedikit';
+        button.innerHTML = '<i class="fas fa-angle-up mr-1"></i>Lihat Lebih Sedikit';
     } else {
         fullTextDiv.classList.add('hidden');
-        button.textContent = 'Lihat Selengkapnya...';
+        button.innerHTML = '<i class="fas fa-angle-down mr-1"></i>Lihat Selengkapnya...';
     }
 }
 </script>
 @endsection
-
-@push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-@endpush

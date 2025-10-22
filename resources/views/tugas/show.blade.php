@@ -1,186 +1,150 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="min-h-screen p-6" style="background-color: #FFE693;">
-    <div class="max-w-4xl mx-auto">
-        
-        <!-- Breadcrumb -->
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="flex items-center space-x-1 md:space-x-3">
-                <li class="flex items-center">
-                    <a href="{{ route('dashboard') }}" class="flex items-center text-gray-600 transition-colors duration-200" style="color: #570C49;" onmouseover="this.style.color='#570C49'" onmouseout="this.style.color='#4B5563'">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
-                        </svg>
-                        Dashboard
-                    </a>
-                </li>
-                <li class="flex items-center">
-                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                    </svg>
-                    <a href="{{ route('tugas.index') }}" class="ml-1 text-gray-600 transition-colors duration-200 md:ml-2" style="color: #570C49;" onmouseover="this.style.color='#570C49'" onmouseout="this.style.color='#4B5563'">Tugas</a>
-                </li>
-                <li aria-current="page" class="flex items-center">
-                    <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span class="ml-1 text-gray-500 md:ml-2 font-medium">Detail Tugas</span>
-                </li>
-            </ol>
-        </nav>
-
-        <!-- Main Header -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
-            <div class="flex items-center space-x-3">
-                <div class="p-3 rounded-lg" style="background-color: #570C49;">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ $tugas->judul }}</h1>
-                    <p class="text-gray-600">{{ $tugas->mapel->nama_mapel }}</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tugas Info Card -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-6">
-            <div class="px-6 py-4" style="background-color: #570C49;">
-                <h2 class="text-lg font-semibold text-white flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Informasi Tugas
-                </h2>
-            </div>
-
-            <div class="p-6 space-y-6">
-                <!-- Mata Pelajaran -->
-                <div class="flex items-start space-x-3">
-                    <div class="flex-shrink-0">
-                        <svg class="w-5 h-5 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Mata Pelajaran</p>
-                        <p class="text-gray-900 font-semibold">{{ $tugas->mapel->nama_mapel }}</p>
-                    </div>
-                </div>
-
-                <!-- Tingkat Kesulitan -->
-                @if($tugas->tingkat_kesulitan)
-                <div class="flex items-start space-x-3">
-                    <div class="flex-shrink-0">
-                        <svg class="w-5 h-5 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Tingkat Kesulitan</p>
-                        <div class="mt-1">
-                            @if($tugas->tingkat_kesulitan == 'mudah')
-                                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                                    <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Mudah
-                                </span>
-                            @elseif($tugas->tingkat_kesulitan == 'normal')
-                                <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-                                    <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Normal
-                                </span>
-                            @else
-                                <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
-                                    <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Susah
-                                </span>
-                            @endif
+<div class="min-h-screen py-8">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-green-600 to-green-800 rounded-3xl shadow-2xl p-8 mb-8 text-white">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-white bg-opacity-20 rounded-2xl p-4">
+                            <i class="fas fa-clipboard-list text-4xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-3xl font-bold mb-2">{{ $tugas->judul }}</h1>
+                            <p class="text-green-200 flex items-center">
+                                <i class="fas fa-book mr-2"></i>
+                                {{ $tugas->mapel->nama_mapel }}
+                            </p>
                         </div>
                     </div>
+                    <a href="{{ url()->previous() }}" 
+                       class="inline-flex items-center px-6 py-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-bold rounded-xl transition duration-300 border-2 border-white border-opacity-30">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Kembali
+                    </a>
                 </div>
+            </div>
+
+            <!-- Tugas Info Card -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Tingkat Kesulitan -->
+                @if($tugas->tingkat_kesulitan)
+                    @if($tugas->tingkat_kesulitan == 'mudah')
+                        <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-green-100 text-sm font-medium mb-1">Tingkat Kesulitan</p>
+                                    <p class="text-3xl font-bold">Mudah</p>
+                                    <p class="text-green-200 text-xs mt-1">≥ 70% kemiripan</p>
+                                </div>
+                                <div class="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center">
+                                    <i class="fas fa-smile text-4xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    @elseif($tugas->tingkat_kesulitan == 'normal')
+                        <div class="bg-gradient-to-br from-yellow-500 to-yellow-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-yellow-100 text-sm font-medium mb-1">Tingkat Kesulitan</p>
+                                    <p class="text-3xl font-bold">Normal</p>
+                                    <p class="text-yellow-200 text-xs mt-1">40-70% kemiripan</p>
+                                </div>
+                                <div class="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center">
+                                    <i class="fas fa-meh text-4xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="bg-gradient-to-br from-red-500 to-red-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-red-100 text-sm font-medium mb-1">Tingkat Kesulitan</p>
+                                    <p class="text-3xl font-bold">Susah</p>
+                                    <p class="text-red-200 text-xs mt-1">< 40% kemiripan</p>
+                                </div>
+                                <div class="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center">
+                                    <i class="fas fa-frown text-4xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                @else
+                    <div class="bg-gradient-to-br from-gray-500 to-gray-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-100 text-sm font-medium mb-1">Tingkat Kesulitan</p>
+                                <p class="text-3xl font-bold">Belum Dianalisis</p>
+                                <p class="text-gray-200 text-xs mt-1">Menunggu analisis AI</p>
+                            </div>
+                            <div class="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center">
+                                <i class="fas fa-question text-4xl"></i>
+                            </div>
+                        </div>
+                    </div>
                 @endif
 
                 <!-- Similarity Score -->
                 @if($tugas->similarity_score)
-                <div class="flex items-start space-x-3">
-                    <div class="flex-shrink-0">
-                        <svg class="w-5 h-5 text-gray-400 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Kemiripan dengan Materi</p>
-                        <div class="mt-1">
-                            <span class="px-3 py-1 rounded-full text-sm font-medium text-white" style="background-color: #570C49;">
-                                {{ number_format($tugas->similarity_score * 100, 1) }}%
-                            </span>
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-100 text-sm font-medium mb-1">Kemiripan Materi</p>
+                                <p class="text-3xl font-bold">{{ round($tugas->similarity_score * 100, 1) }}%</p>
+                                <p class="text-blue-200 text-xs mt-1">Dengan materi terkait</p>
+                            </div>
+                            <div class="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center">
+                                <i class="fas fa-percentage text-4xl"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
                 @endif
 
                 <!-- Created Date -->
-                <div class="flex items-start space-x-3">
-                    <div class="flex-shrink-0">
-                        <svg class="w-5 h-5 text-gray-400 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Tanggal Dibuat</p>
-                        <p class="text-gray-900 font-semibold">{{ $tugas->created_at->format('d F Y, H:i') }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Soal/Pertanyaan -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-6">
-            <div class="px-6 py-4" style="background-color: #570C49;">
-                <h2 class="text-lg font-semibold text-white flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Soal/Pertanyaan
-                </h2>
-            </div>
-
-            <div class="p-6">
-                <div class="prose max-w-none">
-                    <div class="bg-gray-50 rounded-lg p-4 border-l-4" style="border-color: #570C49;">
-                        <p class="text-gray-800 whitespace-pre-wrap">{{ $tugas->pertanyaan }}</p>
+                <div class="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-2xl shadow-xl p-6 text-white transform hover:scale-105 transition duration-300">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-indigo-100 text-sm font-medium mb-1">Tanggal Dibuat</p>
+                            <p class="text-2xl font-bold">{{ $tugas->created_at->format('d M Y') }}</p>
+                            <p class="text-indigo-200 text-xs mt-1">{{ $tugas->created_at->format('H:i') }}</p>
+                        </div>
+                        <div class="bg-white bg-opacity-20 rounded-full w-16 h-16 flex items-center justify-center">
+                            <i class="fas fa-calendar text-4xl"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row justify-between gap-4">
-            <a href="{{ route('tugas.index') }}" 
-               class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all duration-200 font-medium">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Kembali ke Daftar Tugas
-            </a>
-            <a href="{{ route('tugas.edit', $tugas) }}" 
-               class="inline-flex items-center justify-center px-8 py-3 text-white rounded-lg focus:ring-2 focus:ring-offset-2 transition-all duration-200 font-medium shadow-lg"
-               style="background-color: #570C49; --tw-ring-color: #570C49;" 
-               onmouseover="this.style.backgroundColor='#4A0B3E'" 
-               onmouseout="this.style.backgroundColor='#570C49'">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-                Edit Tugas
-            </a>
+            <!-- Soal/Pertanyaan -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <div class="flex items-center mb-6">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg w-12 h-12 flex items-center justify-center mr-3">
+                        <i class="fas fa-question-circle text-white text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Soal/Pertanyaan</h2>
+                </div>
+
+                <div class="bg-gradient-to-br from-green-50 to-white rounded-2xl p-6 border-2 border-green-200">
+                    <p class="text-gray-800 text-lg leading-relaxed whitespace-pre-wrap">{{ $tugas->pertanyaan }}</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="{{ url()->previous() }}" 
+                   class="flex-1 py-4 px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition duration-300 text-center border-2 border-gray-300 hover:border-gray-400 shadow-md hover:shadow-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </a>
+                <a href="{{ route('tugas.edit', $tugas) }}" 
+                   class="flex-1 py-4 px-6 bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-bold rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition duration-300 text-center">
+                    <i class="fas fa-edit mr-2"></i>
+                    Edit Tugas
+                </a>
+            </div>
         </div>
     </div>
 </div>
