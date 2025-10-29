@@ -5,6 +5,7 @@ namespace App\Services;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Smalot\PdfParser\Parser;
+use PhpOffice\PhpWord\IOFactory;
 
 class TextProcessingService
 {
@@ -298,28 +299,248 @@ class TextProcessingService
     }
 
     /**
-     * Extract text from Word document (basic implementation)
+     * Extract text from Word document using PhpOffice/PhpWord
      *
      * @param string $filePath
      * @return string
      */
     private function extractTextFromWord(string $filePath): string
     {
-        // For DOCX files, you would typically use a library like PhpOffice/PhpWord
-        // This is a basic implementation
+        $text = '';
         
-        $content = file_get_contents($filePath);
-        
-        // For newer .docx files (ZIP-based)
-        if (strpos($content, 'PK') === 0) {
-            // This is a simplified extraction - in production use proper DOCX parser
-            $text = strip_tags($content);
-        } else {
-            // For older .doc files
-            $text = preg_replace('/[^\x20-\x7E\x0A\x0D]/', '', $content);
+        try {
+            Log::info('Extracting Word document with PhpOffice/PhpWord', ['file' => $filePath]);
+            
+            // Load the document
+            $phpWord = IOFactory::load($filePath);
+            
+            // Extract text from all sections
+            foreach ($phpWord->getSections() as $section) {
+                // Get all elements in the section
+                $elements = $section->getElements();
+                
+                foreach ($elements as $element) {
+                    $text .= $this->extractTextFromElement($element) . "\n";
+                }
+            }
+            
+            // Clean extracted text
+            $text = $this->deepCleanText($text);
+            
+            if (empty(trim($text))) {
+                Log::warning('PhpWord extraction returned empty text, trying fallback');
+                // Fallback to manual extraction
+                $text = $this->extractTextFromDOCXManual($filePath);
+            } else {
+                Log::info('Word text extracted successfully with PhpOffice', [
+                    'file' => $filePath,
+                    'length' => strlen($text),
+                    'word_count' => str_word_count($text)
+                ]);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error('PhpWord extraction failed, using fallback: ' . $e->getMessage());
+            // Fallback to manual extraction
+            $text = $this->extractTextFromDOCXManual($filePath);
         }
         
         return $this->cleanText($text);
+    }
+
+    /**
+     * Extract text from PhpWord element recursively
+     *
+     * @param mixed $element
+     * @return string
+     */
+    private function extractTextFromElement($element): string
+    {
+        $text = '';
+        
+        // Handle different element types
+        $elementClass = get_class($element);
+        
+        switch (true) {
+            case $element instanceof \PhpOffice\PhpWord\Element\Text:
+                $text .= $element->getText() . ' ';
+                break;
+                
+            case $element instanceof \PhpOffice\PhpWord\Element\TextRun:
+                foreach ($element->getElements() as $textElement) {
+                    $text .= $this->extractTextFromElement($textElement);
+                }
+                break;
+                
+            case $element instanceof \PhpOffice\PhpWord\Element\Table:
+                foreach ($element->getRows() as $row) {
+                    foreach ($row->getCells() as $cell) {
+                        foreach ($cell->getElements() as $cellElement) {
+                            $text .= $this->extractTextFromElement($cellElement);
+                        }
+                        $text .= ' ';
+                    }
+                    $text .= "\n";
+                }
+                break;
+                
+            case $element instanceof \PhpOffice\PhpWord\Element\ListItem:
+                $text .= '- ' . $element->getTextObject()->getText() . "\n";
+                break;
+                
+            case $element instanceof \PhpOffice\PhpWord\Element\Title:
+            case $element instanceof \PhpOffice\PhpWord\Element\TextBreak:
+                $text .= "\n";
+                break;
+        }
+        
+        return $text;
+    }
+
+    /**
+     * Fallback: Extract text from DOCX manually if PhpWord fails
+     *
+     * @param string $filePath
+     * @return string
+     */
+    private function extractTextFromDOCXManual(string $filePath): string
+    {
+        // Check if file is DOCX (ZIP-based) or DOC (binary)
+        $fh = fopen($filePath, 'r');
+        $magic = fread($fh, 2);
+        fclose($fh);
+        
+        // DOCX files start with 'PK' (ZIP signature)
+        if ($magic === 'PK') {
+            Log::info('Using manual DOCX extraction (fallback)');
+            return $this->extractTextFromDOCX($filePath);
+        } else {
+            // Old DOC format - basic extraction
+            Log::info('Using basic DOC extraction (fallback)');
+            $content = file_get_contents($filePath);
+            return $this->extractTextFromDOC($content);
+        }
+    }
+
+    /**
+     * Extract text from DOCX file (ZIP-based format)
+     *
+     * @param string $filePath
+     * @return string
+     */
+    private function extractTextFromDOCX(string $filePath): string
+    {
+        $text = '';
+        
+        try {
+            $zip = new \ZipArchive();
+            
+            if ($zip->open($filePath) === true) {
+                // DOCX main content is in word/document.xml
+                $content = $zip->getFromName('word/document.xml');
+                
+                if ($content === false) {
+                    Log::warning('Could not find word/document.xml in DOCX');
+                    $zip->close();
+                    return '';
+                }
+                
+                $zip->close();
+                
+                // Remove XML declaration and clean up
+                $content = preg_replace('/<\?xml[^>]*\?>/', '', $content);
+                
+                // Parse XML and extract text
+                // Suppress XML errors
+                libxml_use_internal_errors(true);
+                $xml = simplexml_load_string($content);
+                libxml_clear_errors();
+                
+                if ($xml === false) {
+                    Log::warning('Could not parse XML from DOCX, trying alternate method');
+                    // Fallback: strip all XML tags
+                    $text = strip_tags($content);
+                    $text = html_entity_decode($text, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                    return $this->deepCleanText($text);
+                }
+                
+                // Register namespaces
+                $xml->registerXPathNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');
+                
+                // Extract all text nodes (includes tables, headers, footers, etc)
+                $textNodes = $xml->xpath('//w:t');
+                
+                if ($textNodes) {
+                    foreach ($textNodes as $node) {
+                        $nodeText = (string)$node;
+                        // Clean each node
+                        $nodeText = html_entity_decode($nodeText, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                        $text .= $nodeText . ' ';
+                    }
+                }
+                
+                // Deep clean the extracted text
+                $text = $this->deepCleanText($text);
+                
+            } else {
+                Log::error('Failed to open DOCX as ZIP: ' . $filePath);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error extracting DOCX: ' . $e->getMessage());
+        }
+        
+        return trim($text);
+    }
+
+    /**
+     * Deep clean text from Word extraction (remove noise)
+     *
+     * @param string $text
+     * @return string
+     */
+    private function deepCleanText(string $text): string
+    {
+        // Decode HTML entities
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        
+        // Remove zero-width and invisible characters
+        $text = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $text);
+        
+        // Remove control characters except newline and tab
+        $text = preg_replace('/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/u', '', $text);
+        
+        // Remove excessive whitespace
+        $text = preg_replace('/\s+/', ' ', $text);
+        
+        // Remove any remaining XML/HTML tags
+        $text = strip_tags($text);
+        
+        // Normalize quotes and dashes using hex codes
+        $text = str_replace(
+            ["\u{201C}", "\u{201D}", "\u{2018}", "\u{2019}", "\u{2013}", "\u{2014}"], 
+            ['"', '"', "'", "'", '-', '-'], 
+            $text
+        );
+        
+        return trim($text);
+    }
+
+    /**
+     * Extract text from old DOC file (binary format)
+     *
+     * @param string $content
+     * @return string
+     */
+    private function extractTextFromDOC(string $content): string
+    {
+        // Old DOC format is binary - basic extraction
+        // Remove non-printable characters
+        $text = preg_replace('/[^\x20-\x7E\x0A\x0D\t]/', ' ', $content);
+        
+        // Remove excessive spaces
+        $text = preg_replace('/\s+/', ' ', $text);
+        
+        return trim($text);
     }
 
     /**

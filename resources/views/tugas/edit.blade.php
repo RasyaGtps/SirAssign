@@ -45,13 +45,13 @@
                 
                     <!-- Error Messages -->
                     @if($errors->any())
-                        <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-6 mb-8 rounded-xl shadow-lg">
+                        <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-4 mb-8 rounded-xl shadow-md">
                             <div class="flex">
-                                <div class="flex-shrink-0 bg-red-500 rounded-full p-2">
-                                    <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                                <div class="flex-shrink-0 bg-red-500 rounded-full w-10 h-10 flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-white text-sm"></i>
                                 </div>
-                                <div class="ml-4">
-                                    <h3 class="text-lg font-bold text-red-800 mb-3">⚠️ Terdapat Kesalahan</h3>
+                                <div class="ml-3">
+                                    <h3 class="text-base font-bold text-red-800 mb-3">⚠️ Terdapat Kesalahan</h3>
                                     <ul class="list-disc list-inside text-red-700 space-y-2">
                                         @foreach($errors->all() as $error)
                                             <li class="text-sm">{{ $error }}</li>
@@ -109,9 +109,42 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('tugas.update', $tugas) }}" method="POST" class="space-y-8">
+                    <form action="{{ route('tugas.update', $tugas) }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                         @csrf
                         @method('PUT')
+                        
+                        <!-- Input Mode Selection -->
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-2xl p-6">
+                            <label class="block text-base font-bold text-gray-800 mb-4">
+                                <span class="flex items-center">
+                                    <i class="fas fa-toggle-on text-xl mr-2" style="color: #570C49;"></i>
+                                    Pilih Mode Input
+                                    <span class="text-red-500 ml-1">*</span>
+                                </span>
+                            </label>
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="input_mode" value="text" class="peer hidden" {{ old('input_mode', $tugas->input_mode) == 'text' ? 'checked' : '' }}>
+                                    <div class="border-3 border-gray-300 rounded-xl p-5 transition-all peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:shadow-lg hover:shadow-md">
+                                        <div class="flex items-center justify-center mb-3">
+                                            <i class="fas fa-keyboard text-4xl text-purple-600"></i>
+                                        </div>
+                                        <h3 class="font-bold text-center text-lg text-gray-800">Ketik Manual</h3>
+                                        <p class="text-sm text-gray-600 text-center mt-2">Tulis soal langsung di form</p>
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="input_mode" value="file" class="peer hidden" {{ old('input_mode', $tugas->input_mode) == 'file' ? 'checked' : '' }}>
+                                    <div class="border-3 border-gray-300 rounded-xl p-5 transition-all peer-checked:border-purple-600 peer-checked:bg-purple-50 peer-checked:shadow-lg hover:shadow-md">
+                                        <div class="flex items-center justify-center mb-3">
+                                            <i class="fas fa-file-upload text-4xl text-purple-600"></i>
+                                        </div>
+                                        <h3 class="font-bold text-center text-lg text-gray-800">Upload File</h3>
+                                        <p class="text-sm text-gray-600 text-center mt-2">Upload PDF atau Word</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
                         
                         <!-- Input Fields Row -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -156,8 +189,8 @@
                             </div>
                         </div>
 
-                        <!-- Soal/Pertanyaan -->
-                        <div>
+                        <!-- Soal/Pertanyaan - Mode Text -->
+                        <div id="text-input-section">
                             <label for="pertanyaan" class="block text-base font-bold text-gray-800 mb-3">
                                 <span class="flex items-center">
                                     <i class="fas fa-question-circle text-xl mr-2" style="color: #570C49;"></i>
@@ -169,13 +202,67 @@
                                       name="pertanyaan" 
                                       rows="8"
                                       class="w-full px-5 py-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 text-base @error('pertanyaan') border-red-400 bg-red-50 @else border-gray-200 bg-white @enderror" 
-                                      placeholder="Masukkan soal atau pertanyaan tugas disini..." 
-                                      required>{{ old('pertanyaan', $tugas->pertanyaan) }}</textarea>
+                                      placeholder="Masukkan soal atau pertanyaan tugas disini...">{{ old('pertanyaan', $tugas->pertanyaan) }}</textarea>
                             
                             <div class="mt-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
                                 <p class="text-sm text-yellow-800 font-medium flex items-center">
                                     <i class="fas fa-info-circle mr-2"></i>
                                     Jika soal diubah, sistem akan menganalisis ulang tingkat kesulitan menggunakan AI.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- File Upload - Mode File -->
+                        <div id="file-upload-section" style="display: none;">
+                            <!-- Current File Info (if exists) -->
+                            @if($tugas->file_path)
+                                <div class="mb-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                                    <p class="text-sm font-bold text-blue-800 mb-2">
+                                        <i class="fas fa-file-alt mr-2"></i>
+                                        File Saat Ini:
+                                    </p>
+                                    <p class="text-sm text-blue-700">
+                                        {{ basename($tugas->file_path) }} 
+                                        <span class="text-xs">({{ strtoupper($tugas->file_type ?? 'unknown') }})</span>
+                                    </p>
+                                </div>
+                            @endif
+
+                            <label for="file" class="block text-base font-bold text-gray-800 mb-3">
+                                <span class="flex items-center">
+                                    <i class="fas fa-file-upload text-xl mr-2" style="color: #570C49;"></i>
+                                    {{ $tugas->file_path ? 'Upload File Baru (Opsional)' : 'Upload File Soal' }}
+                                    @if(!$tugas->file_path)
+                                        <span class="text-red-500 ml-1">*</span>
+                                    @endif
+                                </span>
+                            </label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition @error('file') border-red-400 bg-red-50 @enderror">
+                                <div class="mb-4">
+                                    <i class="fas fa-cloud-upload-alt text-6xl text-purple-600"></i>
+                                </div>
+                                <input type="file" 
+                                       id="file" 
+                                       name="file" 
+                                       accept=".pdf,.doc,.docx,.txt"
+                                       class="hidden">
+                                <label for="file" class="cursor-pointer">
+                                    <span class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition">
+                                        <i class="fas fa-folder-open mr-2"></i>
+                                        Pilih File Baru
+                                    </span>
+                                </label>
+                                <p class="text-sm text-gray-600 mt-4">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Format: PDF, DOC, DOCX, TXT (Maks. 10MB)
+                                </p>
+                                <p id="file-name" class="text-sm font-bold text-purple-600 mt-2"></p>
+                            </div>
+                            
+                            <div class="mt-3 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                                <p class="text-sm text-yellow-800 font-medium flex items-center">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    {{ $tugas->file_path ? 'Upload file baru akan mengganti file lama dan menganalisis ulang.' : 'File akan diekstrak dan dianalisis tingkat kesulitannya.' }}
                                 </p>
                             </div>
                         </div>
@@ -244,22 +331,67 @@
 
 @section('scripts')
 <script>
-    // Auto-resize textarea
     document.addEventListener('DOMContentLoaded', function() {
-        const textarea = document.getElementById('pertanyaan');
-        
+        const textMode = document.querySelector('input[name="input_mode"][value="text"]');
+        const fileMode = document.querySelector('input[name="input_mode"][value="file"]');
+        const textSection = document.getElementById('text-input-section');
+        const fileSection = document.getElementById('file-upload-section');
+        const pertanyaanInput = document.getElementById('pertanyaan');
+        const fileInput = document.getElementById('file');
+        const fileNameDisplay = document.getElementById('file-name');
+
+        // Toggle sections based on mode
+        function toggleSections() {
+            if (textMode.checked) {
+                textSection.style.display = 'block';
+                fileSection.style.display = 'none';
+                pertanyaanInput.required = true;
+                fileInput.required = false;
+            } else if (fileMode.checked) {
+                textSection.style.display = 'none';
+                fileSection.style.display = 'block';
+                pertanyaanInput.required = false;
+                // File not required on edit if already has file
+                fileInput.required = {{ $tugas->file_path ? 'false' : 'true' }};
+            }
+        }
+
+        // Listen to mode changes - gunakan click dan change
+        textMode.addEventListener('click', toggleSections);
+        fileMode.addEventListener('click', toggleSections);
+        textMode.addEventListener('change', toggleSections);
+        fileMode.addEventListener('change', toggleSections);
+
+        // Auto-resize textarea
         function autoResizeTextarea(element) {
             element.style.height = 'auto';
             element.style.height = Math.min(element.scrollHeight, 400) + 'px';
         }
         
         // Set initial height
-        autoResizeTextarea(textarea);
+        autoResizeTextarea(pertanyaanInput);
         
         // Auto-resize on input
-        textarea.addEventListener('input', function() {
+        pertanyaanInput.addEventListener('input', function() {
             autoResizeTextarea(this);
         });
+
+        // Display file name when selected
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const fileName = this.files[0].name;
+                const fileSize = (this.files[0].size / 1024 / 1024).toFixed(2);
+                fileNameDisplay.innerHTML = `<i class="fas fa-file-alt mr-2"></i>${fileName} (${fileSize} MB)`;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        });
+
+        // Initialize
+        toggleSections();
+        
+        // Debug
+        console.log('Edit toggle script loaded');
     });
 </script>
 @endsection

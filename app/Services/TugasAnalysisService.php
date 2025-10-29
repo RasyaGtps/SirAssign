@@ -33,7 +33,13 @@ class TugasAnalysisService
     public function analyzeDifficulty(Tugas $tugas): array
     {
         try {
-            Log::info("Analyzing difficulty for tugas: {$tugas->judul} (ID: {$tugas->id}) - UPDATE ANALYSIS");
+            Log::info("=== ANALYZE DIFFICULTY START ===", [
+                'tugas_id' => $tugas->id,
+                'tugas_judul' => $tugas->judul,
+                'pertanyaan_length' => strlen($tugas->pertanyaan),
+                'pertanyaan_preview' => substr($tugas->pertanyaan, 0, 300),
+                'pertanyaan_full' => $tugas->pertanyaan
+            ]);
 
             // Step 1: Generate embedding for the question
             $questionEmbedding = $this->embeddingService->generateEmbedding($tugas->pertanyaan);
@@ -341,8 +347,15 @@ class TugasAnalysisService
     {
         $cleanQuestion = trim($question);
         
+        Log::info("=== CHECKING IF NONSENSE ===", [
+            'original_length' => strlen($question),
+            'clean_length' => strlen($cleanQuestion),
+            'preview' => substr($cleanQuestion, 0, 200)
+        ]);
+        
         // Check for very short questions
         if (strlen($cleanQuestion) < 10) {
+            Log::warning("NONSENSE: Too short", ['length' => strlen($cleanQuestion)]);
             return true;
         }
 
@@ -350,20 +363,23 @@ class TugasAnalysisService
         $nonsensePatterns = [
             '/dwadadjkasdlkjawlkda/i',          // exact pattern from user's example
             '/dwadasdaw/i',                     // another pattern from user's example
-            '/[a-z]{12,}/i',                    // long sequences of only letters (likely random)
-            '/[qwertyuiop]{5,}/i',              // keyboard row patterns
-            '/[asdfghjkl]{5,}/i', 
-            '/[zxcvbnm]{5,}/i',
             '/[kdjaskdjaskd]{6,}/i',            // specific nonsense patterns
             '/[aldjanwki]{6,}/i',
+            // NOTE: Keyboard row patterns removed - too many false positives with Indonesian words
+            // e.g. "bagaimana", "anaerobik", "global" incorrectly flagged
         ];
 
         foreach ($nonsensePatterns as $pattern) {
             if (preg_match($pattern, $cleanQuestion)) {
-                Log::info("Nonsense pattern detected", ['pattern' => $pattern, 'question' => substr($cleanQuestion, 0, 100)]);
+                Log::warning("NONSENSE: Pattern matched", [
+                    'pattern' => $pattern, 
+                    'question' => substr($cleanQuestion, 0, 100)
+                ]);
                 return true;
             }
         }
+        
+        Log::info("No nonsense patterns matched");
 
         // Check for words that are clearly random character sequences (10+ chars, no vowels or all consonants)
         $words = preg_split('/\s+/', $cleanQuestion);
@@ -410,23 +426,42 @@ class TugasAnalysisService
             foreach ($words as $word) {
                 $cleanWord = preg_replace('/[^a-zA-Z]/', '', $word);
                 // Valid words: have vowels, reasonable length, not all consonants
-                if (strlen($cleanWord) > 1 && strlen($cleanWord) < 15) {
+                // Increased max length to 25 for Indonesian compound words
+                if (strlen($cleanWord) > 1 && strlen($cleanWord) < 25) {
                     $vowels = preg_match_all('/[aeiouAEIOU]/', $cleanWord);
                     $total = strlen($cleanWord);
                     
                     // Word is valid if it has some vowels and reasonable vowel ratio
-                    if ($vowels > 0 && ($vowels / $total) > 0.1 && ($vowels / $total) < 0.8) {
+                    if ($vowels > 0 && ($vowels / $total) > 0.05 && ($vowels / $total) < 0.9) {
                         $validWords++;
                     }
                 }
             }
             
-            // If less than 70% of words seem valid, likely contains nonsense
-            if ($validWords / $totalWords < 0.7) {
+            // Log word analysis
+            $ratio = $validWords / $totalWords;
+            Log::info("=== WORD VALIDATION ANALYSIS ===", [
+                'total_words' => $totalWords,
+                'valid_words' => $validWords,
+                'ratio' => round($ratio, 3),
+                'threshold' => 0.5,
+                'passes' => $ratio >= 0.5 || $totalWords < 10
+            ]);
+            
+            // Relaxed threshold to 50% for file uploads with possible formatting
+            // If less than 50% of words seem valid, likely contains nonsense
+            if ($totalWords >= 10 && $ratio < 0.5) {
+                Log::warning("NONSENSE: Low valid word ratio", [
+                    'total' => $totalWords,
+                    'valid' => $validWords,
+                    'ratio' => round($ratio, 3),
+                    'sample_words' => array_slice($words, 0, 10)
+                ]);
                 return true;
             }
         }
 
+        Log::info("=== NONSENSE CHECK PASSED ===");
         return false;
     }
 
@@ -441,32 +476,32 @@ class TugasAnalysisService
         $word = strtolower($word);
         $length = strlen($word);
         
-        if ($length < 8) {
+        // More lenient for longer words
+        if ($length < 12) {
             return false;
         }
         
         // Check for high character variety (possible random mashing)
+        // Increased threshold to 0.85 to allow Indonesian words
         $uniqueChars = count(array_unique(str_split($word)));
-        if ($uniqueChars / $length > 0.8) {
+        if ($uniqueChars / $length > 0.85) {
             return true;
         }
         
-        // Check for suspicious consonant clusters
-        if (preg_match('/[bcdfghjklmnpqrstvwxyz]{6,}/', $word)) {
+        // Check for suspicious consonant clusters (7+ consecutive)
+        if (preg_match('/[bcdfghjklmnpqrstvwxyz]{7,}/', $word)) {
             return true;
         }
         
-        // Check for patterns that look like keyboard mashing
+        // Check for patterns that look like keyboard mashing (6+ chars)
         $mashingPatterns = [
-            '/[qwertyuiop]+/',
-            '/[asdfghjkl]+/', 
-            '/[zxcvbnm]+/',
-            '/[abcd]+[efgh]+/',
-            '/[ijkl]+[mnop]+/'
+            '/[qwertyuiop]{6,}/',
+            '/[asdfghjkl]{6,}/', 
+            '/[zxcvbnm]{6,}/',
         ];
         
         foreach ($mashingPatterns as $pattern) {
-            if (preg_match($pattern, $word) && strlen($word) > 7) {
+            if (preg_match($pattern, $word)) {
                 return true;
             }
         }

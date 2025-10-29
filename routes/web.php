@@ -34,7 +34,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
-    // Mapel routes (hanya view)
     Route::get('mapel', [MapelController::class, 'index'])->name('mapel.index');
     Route::get('mapel/{mapel}', [MapelController::class, 'show'])->name('mapel.show');
     

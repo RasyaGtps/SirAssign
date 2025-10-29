@@ -20,15 +20,15 @@
 
             <!-- Alert Messages -->
             @if(session('success'))
-                <div class="mb-6">
-                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-xl shadow-lg">
+                <div class="mb-6 max-w-4xl mx-auto">
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-4 rounded-xl shadow-md">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-green-500 rounded-full p-2">
-                                <i class="fas fa-check text-white text-xl"></i>
+                            <div class="flex-shrink-0 bg-green-500 rounded-full w-10 h-10 flex items-center justify-center">
+                                <i class="fas fa-check text-white text-sm"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-lg font-bold text-green-800">✅ Berhasil!</p>
-                                <p class="text-green-700">{{ session('success') }}</p>
+                            <div class="ml-3">
+                                <p class="text-base font-bold text-green-800">✅ Berhasil!</p>
+                                <p class="text-sm text-green-700">{{ session('success') }}</p>
                             </div>
                         </div>
                     </div>
@@ -36,15 +36,15 @@
             @endif
 
             @if(session('error'))
-                <div class="mb-6">
-                    <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-5 rounded-xl shadow-lg">
+                <div class="mb-6 max-w-4xl mx-auto">
+                    <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-red-500 rounded-full p-2">
-                                <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                            <div class="flex-shrink-0 bg-red-500 rounded-full w-10 h-10 flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-white text-sm"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-lg font-bold text-red-800">⚠️ Error!</p>
-                                <p class="text-red-700">{{ session('error') }}</p>
+                            <div class="ml-3">
+                                <p class="text-base font-bold text-red-800">⚠️ Error!</p>
+                                <p class="text-sm text-red-700">{{ session('error') }}</p>
                             </div>
                         </div>
                     </div>

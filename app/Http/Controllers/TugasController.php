@@ -5,17 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\Tugas;
 use App\Models\Mapel;
 use App\Services\TugasAnalysisService;
+use App\Services\TextProcessingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class TugasController extends Controller
 {
     private TugasAnalysisService $tugasAnalysisService;
+    private TextProcessingService $textProcessingService;
 
-    public function __construct(TugasAnalysisService $tugasAnalysisService)
-    {
+    public function __construct(
+        TugasAnalysisService $tugasAnalysisService,
+        TextProcessingService $textProcessingService
+    ) {
         $this->tugasAnalysisService = $tugasAnalysisService;
+        $this->textProcessingService = $textProcessingService;
     }
 
     /**
@@ -48,11 +55,21 @@ class TugasController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        // Validation rules berbeda tergantung mode
+        $rules = [
             'mapel_id' => 'required|exists:mapels,id',
             'judul' => 'required|string|max:255',
-            'pertanyaan' => 'required|string|min:10'
-        ]);
+            'input_mode' => 'required|in:text,file'
+        ];
+
+        // Tambah rules sesuai mode
+        if ($request->input_mode === 'text') {
+            $rules['pertanyaan'] = 'required|string|min:10';
+        } else {
+            $rules['file'] = 'required|file|mimes:pdf,doc,docx,txt|max:10240';
+        }
+
+        $request->validate($rules);
 
         // Verify user has access to this mapel
         $userMapelIds = Auth::user()->mapels->pluck('id')->toArray();
@@ -60,13 +77,79 @@ class TugasController extends Controller
             return back()->withErrors(['mapel_id' => 'Anda tidak memiliki akses ke mapel ini.']);
         }
 
-        // Create tugas
-        $tugas = Tugas::create([
+        // Prepare data
+        $data = [
             'mapel_id' => $request->mapel_id,
             'judul' => $request->judul,
-            'pertanyaan' => $request->pertanyaan,
-            'tingkat_kesulitan' => 'normal' // Default, will be updated by analysis
-        ]);
+            'input_mode' => $request->input_mode,
+            'tingkat_kesulitan' => 'normal' // Default
+        ];
+
+        // Handle berdasarkan mode
+        if ($request->input_mode === 'text') {
+            // Mode ketik manual
+            $data['pertanyaan'] = $request->pertanyaan;
+        } else {
+            // Mode upload file
+            $file = $request->file('file');
+            $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('tugas', $fileName, 'public');
+
+            $data['file_path'] = $filePath;
+            $data['file_type'] = $file->getClientOriginalExtension();
+
+            // Extract text dari file untuk pertanyaan
+            try {
+                $fullPath = storage_path('app/public/' . $filePath);
+                $mimeType = $file->getMimeType();
+                
+                Log::info("=== START FILE EXTRACTION ===", [
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_size' => $file->getSize(),
+                    'mime_type' => $mimeType,
+                    'full_path' => $fullPath,
+                    'file_exists' => file_exists($fullPath)
+                ]);
+                
+                $extractedText = $this->textProcessingService->extractTextFromFile($fullPath, $mimeType);
+                
+                Log::info("=== EXTRACTED TEXT RESULT ===", [
+                    'is_empty' => empty(trim($extractedText)),
+                    'length' => strlen($extractedText),
+                    'trimmed_length' => strlen(trim($extractedText)),
+                    'word_count' => str_word_count($extractedText),
+                    'first_100_chars' => substr($extractedText, 0, 100),
+                    'last_100_chars' => substr($extractedText, -100),
+                    'full_preview' => substr($extractedText, 0, 500)
+                ]);
+                
+                if (empty(trim($extractedText))) {
+                    // Delete file jika gagal extract
+                    Storage::disk('public')->delete($filePath);
+                    Log::error("EMPTY TEXT EXTRACTED - Deleting file");
+                    return back()->withErrors(['file' => 'Gagal mengekstrak teks dari file. Pastikan file tidak kosong.'])->withInput();
+                }
+                
+                $data['pertanyaan'] = $extractedText;
+                
+                Log::info("=== TEXT ASSIGNED TO PERTANYAAN ===", [
+                    'pertanyaan_length' => strlen($data['pertanyaan']),
+                    'pertanyaan_preview' => substr($data['pertanyaan'], 0, 200)
+                ]);
+                
+            } catch (\Exception $e) {
+                // Delete file jika gagal
+                Storage::disk('public')->delete($filePath);
+                Log::error("=== EXCEPTION IN FILE EXTRACTION ===", [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return back()->withErrors(['file' => 'Gagal memproses file: ' . $e->getMessage()])->withInput();
+            }
+        }
+
+        // Create tugas
+        $tugas = Tugas::create($data);
 
         // Analyze difficulty automatically
         try {
@@ -74,6 +157,12 @@ class TugasController extends Controller
             
             // Check if question should be rejected
             if (isset($analysis['status']) && $analysis['status'] === 'rejected') {
+                // Delete uploaded file if exists
+                if ($tugas->file_path && Storage::disk('public')->exists($tugas->file_path)) {
+                    Storage::disk('public')->delete($tugas->file_path);
+                }
+                $tugas->delete();
+                
                 return redirect()->back()
                     ->withErrors(['pertanyaan' => $analysis['message']])
                     ->withInput();
@@ -82,6 +171,7 @@ class TugasController extends Controller
             $message = 'Tugas berhasil dibuat! ' . $analysis['explanation'];
         } catch (\Exception $e) {
             $message = 'Tugas berhasil dibuat, tetapi analisis kesulitan gagal. Tingkat kesulitan diset ke normal.';
+            Log::error('Analysis failed: ' . $e->getMessage());
         }
 
         return redirect()->route('tugas.index')->with('success', $message);
@@ -140,11 +230,22 @@ class TugasController extends Controller
      */
     public function update(Request $request, Tugas $tugas)
     {
-        $request->validate([
+        // Validation rules berbeda tergantung mode
+        $rules = [
             'mapel_id' => 'required|exists:mapels,id',
             'judul' => 'required|string|max:255',
-            'pertanyaan' => 'required|string|min:10'
-        ]);
+            'input_mode' => 'required|in:text,file'
+        ];
+
+        // Tambah rules sesuai mode
+        if ($request->input_mode === 'text') {
+            $rules['pertanyaan'] = 'required|string|min:10';
+        } else {
+            // File optional saat edit (kalau ga upload berarti pakai file lama)
+            $rules['file'] = 'nullable|file|mimes:pdf,doc,docx,txt|max:10240';
+        }
+
+        $request->validate($rules);
 
         // Verify user has access to both old and new mapel
         $userMapelIds = Auth::user()->mapels->pluck('id')->toArray();
@@ -152,11 +253,64 @@ class TugasController extends Controller
             return back()->withErrors(['mapel_id' => 'Anda tidak memiliki akses ke mapel ini.']);
         }
 
-        $tugas->update([
+        // Prepare update data
+        $data = [
             'mapel_id' => $request->mapel_id,
             'judul' => $request->judul,
-            'pertanyaan' => $request->pertanyaan,
-        ]);
+            'input_mode' => $request->input_mode,
+        ];
+
+        // Handle berdasarkan mode
+        if ($request->input_mode === 'text') {
+            // Mode text - update pertanyaan, hapus file jika ada
+            $data['pertanyaan'] = $request->pertanyaan;
+            
+            // Hapus file lama jika ada
+            if ($tugas->file_path && Storage::disk('public')->exists($tugas->file_path)) {
+                Storage::disk('public')->delete($tugas->file_path);
+            }
+            $data['file_path'] = null;
+            $data['file_type'] = null;
+            
+        } else {
+            // Mode file
+            if ($request->hasFile('file')) {
+                // Ada file baru - hapus file lama
+                if ($tugas->file_path && Storage::disk('public')->exists($tugas->file_path)) {
+                    Storage::disk('public')->delete($tugas->file_path);
+                }
+
+                // Upload file baru
+                $file = $request->file('file');
+                $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $filePath = $file->storeAs('tugas', $fileName, 'public');
+
+                $data['file_path'] = $filePath;
+                $data['file_type'] = $file->getClientOriginalExtension();
+
+                // Extract text dari file
+                try {
+                    $fullPath = storage_path('app/public/' . $filePath);
+                    $mimeType = $file->getMimeType();
+                    $extractedText = $this->textProcessingService->extractTextFromFile($fullPath, $mimeType);
+                    
+                    if (empty(trim($extractedText))) {
+                        Storage::disk('public')->delete($filePath);
+                        return back()->withErrors(['file' => 'Gagal mengekstrak teks dari file. Pastikan file tidak kosong.'])->withInput();
+                    }
+                    
+                    $data['pertanyaan'] = $extractedText;
+                } catch (\Exception $e) {
+                    Storage::disk('public')->delete($filePath);
+                    Log::error("Failed to extract text: " . $e->getMessage());
+                    return back()->withErrors(['file' => 'Gagal memproses file: ' . $e->getMessage()])->withInput();
+                }
+            }
+            // Kalau ga ada file baru, pertanyaan tetap pakai yang lama (dari file lama)
+        }
+
+        // Update tugas
+        $tugas->update($data);
 
         $messages = [];
 
@@ -184,7 +338,7 @@ class TugasController extends Controller
             if (!empty($matchingMaterials)) {
                 $materialTitles = array_map(function($material) {
                     return $material['title'] . ' (skor: ' . number_format($material['score'], 3) . ')';
-                }, array_slice($matchingMaterials, 0, 3)); // Top 3 materials with scores
+                }, array_slice($matchingMaterials, 0, 3));
                 
                 $messages[] = 'Ditemukan ' . count($matchingMaterials) . ' materi yang relevan: ' . implode(', ', $materialTitles);
             } else {
@@ -209,6 +363,11 @@ class TugasController extends Controller
         $userMapelIds = Auth::user()->mapels->pluck('id')->toArray();
         if (!in_array($tugas->mapel_id, $userMapelIds)) {
             abort(403, 'Anda tidak memiliki akses ke tugas ini.');
+        }
+
+        // Delete file if exists
+        if ($tugas->file_path && Storage::disk('public')->exists($tugas->file_path)) {
+            Storage::disk('public')->delete($tugas->file_path);
         }
 
         $tugas->delete();

@@ -20,15 +20,15 @@
 
             <!-- Alert Messages -->
             @if(session('success'))
-                <div class="mb-6">
-                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-5 rounded-xl shadow-lg">
+                <div class="mb-6 max-w-4xl mx-auto">
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-4 rounded-xl shadow-md">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-green-500 rounded-full p-2">
-                                <i class="fas fa-check text-white text-xl"></i>
+                            <div class="flex-shrink-0 bg-green-500 rounded-full w-10 h-10 flex items-center justify-center">
+                                <i class="fas fa-check text-white text-sm"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-lg font-bold text-green-800">✅ Berhasil!</p>
-                                <p class="text-green-700">{{ session('success') }}</p>
+                            <div class="ml-3">
+                                <p class="text-base font-bold text-green-800">✅ Berhasil!</p>
+                                <p class="text-sm text-green-700">{{ session('success') }}</p>
                             </div>
                         </div>
                     </div>
@@ -36,15 +36,15 @@
             @endif
 
             @if(session('error'))
-                <div class="mb-6">
-                    <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-5 rounded-xl shadow-lg">
+                <div class="mb-6 max-w-4xl mx-auto">
+                    <div class="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-4 rounded-xl shadow-md">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0 bg-red-500 rounded-full p-2">
-                                <i class="fas fa-exclamation-triangle text-white text-xl"></i>
+                            <div class="flex-shrink-0 bg-red-500 rounded-full w-10 h-10 flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-white text-sm"></i>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-lg font-bold text-red-800">⚠️ Error!</p>
-                                <p class="text-red-700">{{ session('error') }}</p>
+                            <div class="ml-3">
+                                <p class="text-base font-bold text-red-800">⚠️ Error!</p>
+                                <p class="text-sm text-red-700">{{ session('error') }}</p>
                             </div>
                         </div>
                     </div>
@@ -87,7 +87,7 @@
             @if($tugas->count() > 0)
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     @foreach($tugas as $item)
-                        <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 border-2 border-gray-100 hover:border-green-300">
+                        <div class="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1 border-2 border-gray-100 hover:border-green-300 flex flex-col">
                             <!-- Card Header -->
                             <div class="p-6 bg-gradient-to-br from-green-50 to-white border-b-2 border-gray-100">
                                 <div class="flex items-start justify-between mb-3">
@@ -143,7 +143,7 @@
                             </div>
 
                             <!-- Card Body - Soal/Pertanyaan -->
-                            <div class="p-6">
+                            <div class="p-6 flex-1">
                                 <div>
                                     <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
                                         <i class="fas fa-question-circle mr-2 text-green-600"></i>

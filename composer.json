@@ -13,6 +13,7 @@
         "gufy/pdftohtml-php": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "phpoffice/phpword": "^1.4",
         "smalot/pdfparser": "^2.12",
         "spatie/pdf-to-text": "^1.54",
         "tecnickcom/tcpdf": "^6.10"
