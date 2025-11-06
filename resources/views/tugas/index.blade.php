@@ -167,6 +167,28 @@
                                         @endif
                                     </div>
                                 </div>
+
+                                <!-- Ringkasan Analisis AI -->
+                                @if($item->ringkasan)
+                                <div class="mt-4">
+                                    <h4 class="text-sm font-bold text-gray-700 mb-2 flex items-center">
+                                        <i class="fas fa-brain mr-2 text-purple-600"></i>
+                                        Ringkasan Analisis:
+                                    </h4>
+                                    <div class="bg-gradient-to-br from-purple-50 to-white rounded-xl p-4 border-2 border-purple-200">
+                                        <p class="text-gray-700 text-sm leading-relaxed">
+                                            {{ Str::limit($item->ringkasan, 150) }}
+                                        </p>
+                                        @if(strlen($item->ringkasan) > 150)
+                                            <a href="{{ route('tugas.show', $item->id) }}" 
+                                               class="text-purple-600 hover:text-purple-800 text-sm font-bold mt-2 inline-block">
+                                                <i class="fas fa-angle-right mr-1"></i>
+                                                Baca Selengkapnya
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endif
                             </div>
 
                             <!-- Card Footer -->

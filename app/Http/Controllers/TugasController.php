@@ -168,7 +168,62 @@ class TugasController extends Controller
                     ->withInput();
             }
             
-            $message = 'Tugas berhasil dibuat! ' . $analysis['explanation'];
+            // Refresh tugas from database to get updated similarity_score
+            $tugas->refresh();
+            
+            // Build message with adjusted similarity score
+            $similarityPercentage = round($tugas->similarity_score * 100, 1);
+            
+            // Check if score was adjusted (if explanation mentions irrelevance)
+            $explanationLower = strtolower($analysis['explanation']);
+            $irrelevanceKeywords = [
+                'tidak relevan',
+                'kurang relevan',
+                'tidak ada hubungan',
+                'tidak ada informasi',
+                'tidak mencukupi',
+                'tidak sesuai',
+                'tidak berkaitan',
+                'tidak tersedia',
+                'di luar materi',
+                'pengetahuan tambahan'
+            ];
+            
+            $isIrrelevant = false;
+            foreach ($irrelevanceKeywords as $keyword) {
+                if (str_contains($explanationLower, $keyword)) {
+                    $isIrrelevant = true;
+                    break;
+                }
+            }
+            
+            // Build contextual message from AI explanation
+            $aiExplanation = $analysis['explanation'];
+            
+            // Clean up technical terms from AI explanation (just in case)
+            $cleanExplanation = str_replace('similarity score', 'kemiripan', $aiExplanation);
+            $cleanExplanation = str_replace('Similarity score', 'Kemiripan', $cleanExplanation);
+            
+            // Insert adjusted similarity percentage into explanation
+            // Pattern: "Soal tentang X pada mata pelajaran Y." → add percentage after "Y"
+            $mapelName = $tugas->mapel->nama_mapel;
+            $cleanExplanation = str_replace(
+                "pada mata pelajaran {$mapelName}.",
+                "pada mata pelajaran {$mapelName} memiliki kemiripan {$similarityPercentage}% dengan materi yang tersedia.",
+                $cleanExplanation
+            );
+            
+            // Save ringkasan to database (with adjusted percentage)
+            $tugas->ringkasan = $cleanExplanation;
+            $tugas->save();
+            
+            // Build notification message
+            $message = "Tugas berhasil dibuat! {$cleanExplanation}";
+            
+            // Simplify if message is too long
+            if (strlen($message) > 380) {
+                $message = "Tugas berhasil dibuat! " . substr($cleanExplanation, 0, 280) . "...";
+            }
         } catch (\Exception $e) {
             $message = 'Tugas berhasil dibuat, tetapi analisis kesulitan gagal. Tingkat kesulitan diset ke normal.';
             Log::error('Analysis failed: ' . $e->getMessage());
@@ -325,7 +380,60 @@ class TugasController extends Controller
                     ->withInput();
             }
             
-            $messages[] = $analysis['explanation'];
+            // Refresh tugas from database to get updated similarity_score
+            $tugas->refresh();
+            
+            // Build message with adjusted similarity score if irrelevant
+            $explanationLower = strtolower($analysis['explanation']);
+            $irrelevanceKeywords = [
+                'tidak relevan',
+                'kurang relevan',
+                'tidak ada hubungan',
+                'tidak ada informasi',
+                'tidak mencukupi',
+                'tidak sesuai',
+                'tidak berkaitan',
+                'tidak tersedia',
+                'di luar materi',
+                'pengetahuan tambahan'
+            ];
+            
+            $isIrrelevant = false;
+            foreach ($irrelevanceKeywords as $keyword) {
+                if (str_contains($explanationLower, $keyword)) {
+                    $isIrrelevant = true;
+                    break;
+                }
+            }
+            
+            $similarityPercentage = round($tugas->similarity_score * 100, 1);
+            
+            // Build contextual message from AI explanation
+            $aiExplanation = $analysis['explanation'];
+            
+            // Clean up technical terms from AI explanation (just in case)
+            $cleanExplanation = str_replace('similarity score', 'kemiripan', $aiExplanation);
+            $cleanExplanation = str_replace('Similarity score', 'Kemiripan', $cleanExplanation);
+            
+            // Insert adjusted similarity percentage into explanation
+            // Pattern: "Soal tentang X pada mata pelajaran Y." → add percentage after "Y"
+            $mapelName = $tugas->mapel->nama_mapel;
+            $cleanExplanation = str_replace(
+                "pada mata pelajaran {$mapelName}.",
+                "pada mata pelajaran {$mapelName} memiliki kemiripan {$similarityPercentage}% dengan materi yang tersedia.",
+                $cleanExplanation
+            );
+            
+            // Save ringkasan to database (with adjusted percentage)
+            $tugas->ringkasan = $cleanExplanation;
+            $tugas->save();
+            
+            // Add contextual message
+            if (strlen($cleanExplanation) > 280) {
+                $messages[] = substr($cleanExplanation, 0, 250) . "...";
+            } else {
+                $messages[] = $cleanExplanation;
+            }
         } catch (\Exception $e) {
             $messages[] = 'Analisis kesulitan gagal.';
             Log::error('Failed to analyze difficulty for tugas ' . $tugas->id . ': ' . $e->getMessage());

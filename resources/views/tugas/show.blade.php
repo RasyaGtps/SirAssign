@@ -132,6 +132,29 @@
                 </div>
             </div>
 
+            <!-- Ringkasan Analisis AI -->
+            @if($tugas->ringkasan)
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <div class="flex items-center mb-6">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg w-12 h-12 flex items-center justify-center mr-3">
+                        <i class="fas fa-brain text-white text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Ringkasan Analisis AI</h2>
+                </div>
+
+                <div class="bg-gradient-to-br from-purple-50 to-white rounded-2xl p-6 border-2 border-purple-200">
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0 mt-1">
+                            <i class="fas fa-lightbulb text-purple-500 text-2xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-gray-700 text-base leading-relaxed">{{ $tugas->ringkasan }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-4">
                 <a href="{{ url()->previous() }}" 

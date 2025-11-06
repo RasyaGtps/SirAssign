@@ -84,9 +84,15 @@ class DocumentIndexingService
                 // Generate embedding
                 $embedding = $this->embeddingService->generateDocumentEmbedding($chunk['text']);
                 
-                // Simple metadata - only ID and text
+                // Complete metadata with mapel_id for filtering
                 $metadata = [
                     'id' => $chunkId,
+                    'type' => 'materi',
+                    'document_id' => $materi->id,
+                    'mapel_id' => $materi->mapel_id,
+                    'mapel_name' => $materi->mapel->nama_mapel ?? '',
+                    'title' => $materi->title,
+                    'file_type' => $materi->file_type ?? '',
                     'text' => $chunk['text']
                 ];
                 

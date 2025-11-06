@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/delete', [PineconeController::class, 'delete'])->name('pinecone.delete');
         Route::post('/batch-store', [PineconeController::class, 'batchStore'])->name('pinecone.batch-store');
         Route::get('/stats', [PineconeController::class, 'stats'])->name('pinecone.stats');
+        Route::get('/reindex-all-materi', [PineconeController::class, 'reindexAllMateri'])->name('pinecone.reindex-all-materi');
     });
 });
 

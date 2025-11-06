@@ -15,6 +15,7 @@ class Tugas extends Model
         'mapel_id',
         'judul',
         'pertanyaan',
+        'ringkasan',
         'file_path',
         'file_type',
         'input_mode',

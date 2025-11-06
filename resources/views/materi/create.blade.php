@@ -127,12 +127,40 @@
                                         </p>
                                     @enderror
                                 </div>
+                                
+                                <!-- File Format Info -->
+                                <div class="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                                    <p class="text-sm text-blue-800 font-medium mb-2">
+                                        <i class="fas fa-clipboard-list mr-1"></i> Format yang didukung:
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                                            <i class="fas fa-file mr-1"></i>ODF
+                                        </span>
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                                            <i class="fas fa-file-word mr-1"></i>DOCX
+                                        </span>
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                                            <i class="fas fa-file-alt mr-1"></i>TXT
+                                        </span>
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                                            <i class="fas fa-file-pdf mr-1"></i>PDF
+                                        </span>
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                                            <i class="fas fa-file-excel mr-1"></i>XLSX
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-blue-600 mt-2">
+                                        <i class="fas fa-database mr-1"></i>
+                                        Maksimal ukuran file: 10MB
+                                    </p>
+                                </div>
                             </div>
 
                             <!-- Right Column -->
                             <div class="space-y-6">
                                 
-                                <!-- File Upload -->
+                                <!-- File Upload with Drag & Drop -->
                                 <div class="form-group">
                                     <label class="block text-base font-bold text-gray-800 mb-3">
                                         <span class="flex items-center">
@@ -142,30 +170,46 @@
                                         </span>
                                     </label>
                                     
-                                    <!-- Custom File Input -->
-                                    <div class="relative">
+                                    <!-- Drag & Drop Area -->
+                                    <div id="drop-area" 
+                                         class="relative border-4 border-dashed rounded-2xl transition-all duration-300 cursor-pointer bg-gradient-to-br from-purple-50 to-white hover:from-purple-100 hover:to-purple-50 @error('file') border-red-400 bg-red-50 @else border-purple-300 hover:border-purple-500 @enderror">
+                                        
+                                        <!-- Hidden File Input -->
                                         <input type="file" 
                                                id="file" 
                                                name="file" 
-                                               class="w-full px-5 py-4 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition duration-300 text-base file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-purple-50 file:text-purple-700 file:font-medium hover:file:bg-purple-100 @error('file') border-red-400 bg-red-50 @else border-gray-200 bg-white @enderror"
+                                               class="hidden"
                                                accept=".odf,.docx,.txt,.pdf,.xlsx"
                                                required
-                                               onchange="showFilePreview(this)">
-                                    </div>
-                                    
-                                    <!-- File Info -->
-                                    <div class="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                                        <p class="text-sm text-blue-800 font-medium mb-2">
-                                            <i class="fas fa-clipboard-list mr-1"></i> Format yang didukung:
-                                        </p>
-                                        <div class="flex flex-wrap gap-2">
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">ODF</span>
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">DOCX</span>
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">TXT</span>
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">PDF</span>
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">XLSX</span>
+                                               onchange="handleFileSelect(this.files)">
+                                        
+                                        <!-- Drop Area Content -->
+                                        <div id="drop-content" class="p-8 text-center">
+                                            <div class="mb-4">
+                                                <i class="fas fa-upload text-6xl text-purple-400"></i>
+                                            </div>
+                                            <h3 class="text-lg font-bold text-gray-800 mb-2">
+                                                Drag & Drop File di Sini
+                                            </h3>
+                                            <p class="text-gray-600 mb-4">atau</p>
+                                            <button type="button" 
+                                                    onclick="document.getElementById('file').click()"
+                                                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300">
+                                                <i class="fas fa-folder-open mr-2"></i>
+                                                Browse File
+                                            </button>
+                                            <p class="text-xs text-gray-500 mt-4">
+                                                <i class="fas fa-info-circle mr-1"></i>
+                                                Maksimal 10MB • PDF, DOCX, TXT, XLSX, ODF
+                                            </p>
                                         </div>
-                                        <p class="text-xs text-blue-600 mt-2">Maksimal ukuran file: 10MB</p>
+                                        
+                                        <div id="drag-overlay" class="hidden absolute inset-0 bg-purple-600 bg-opacity-90 rounded-2xl flex items-center justify-center">
+                                            <div class="text-center">
+                                                <i class="fas fa-download text-6xl text-white mb-4 animate-pulse"></i>
+                                                <p class="text-2xl font-bold text-white">Lepaskan File di Sini!</p>
+                                            </div>
+                                        </div>
                                     </div>
                                     
                                     @error('file')
@@ -188,9 +232,9 @@
                                         <div class="flex-shrink-0">
                                             <i id="file-icon" class="fas fa-file text-4xl" style="color: #570C49;"></i>
                                         </div>
-                                        <div>
+                                        <div class="flex-1 min-w-0">
                                             <h4 class="text-lg font-bold text-gray-800 mb-1">File Terpilih</h4>
-                                            <p id="file-name" class="text-gray-700 font-medium"></p>
+                                            <p id="file-name" class="text-gray-700 font-medium break-all"></p>
                                             <p id="file-info" class="text-sm text-gray-600"></p>
                                         </div>
                                     </div>
@@ -248,8 +292,192 @@
 </div>
 @endsection
 
+@section('scripts')
 <script>
-function showFilePreview(input) {
+// ===== DRAG & DROP FUNCTIONALITY =====
+
+const dropArea = document.getElementById('drop-area');
+const dropContent = document.getElementById('drop-content');
+const dragOverlay = document.getElementById('drag-overlay');
+const fileInput = document.getElementById('file');
+
+// Drag counter to prevent flickering
+let dragCounter = 0;
+
+// Prevent default drag behaviors
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+    document.body.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+// Highlight drop area when dragging over it
+dropArea.addEventListener('dragenter', function(e) {
+    dragCounter++;
+    highlight();
+}, false);
+
+dropArea.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}, false);
+
+dropArea.addEventListener('dragleave', function(e) {
+    dragCounter--;
+    if (dragCounter === 0) {
+        unhighlight();
+    }
+}, false);
+
+dropArea.addEventListener('drop', function(e) {
+    dragCounter = 0;
+    unhighlight();
+    handleDrop(e);
+}, false);
+
+function highlight() {
+    dragOverlay.classList.remove('hidden');
+    dropArea.classList.add('border-purple-600', 'scale-105', 'shadow-2xl');
+}
+
+function unhighlight() {
+    dragOverlay.classList.add('hidden');
+    dropArea.classList.remove('border-purple-600', 'scale-105', 'shadow-2xl');
+}
+
+// Handle dropped files
+function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    console.log('Files dropped:', files.length);
+    
+    if (files && files.length > 0) {
+        // Create a new FileList-like object
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(files[0]);
+        
+        // Assign to file input
+        fileInput.files = dataTransfer.files;
+        
+        console.log('File assigned to input:', fileInput.files.length);
+        
+        // Process the file
+        handleFileSelect(files);
+    }
+}
+
+// Handle file selection (both drag-drop and browse)
+function handleFileSelect(files) {
+    if (files && files.length > 0) {
+        const file = files[0];
+        
+        // Validate file type
+        const allowedTypes = ['.odf', '.docx', '.txt', '.pdf', '.xlsx'];
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedTypes.includes(fileExtension)) {
+            alert('⚠️ Format file tidak didukung!\n\nHanya menerima: PDF, DOCX, TXT, XLSX, ODF');
+            fileInput.value = '';
+            return;
+        }
+        
+        // Validate file size (10MB max)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        if (file.size > maxSize) {
+            alert('⚠️ Ukuran file terlalu besar!\n\nMaksimal: 10MB\nUkuran file Anda: ' + (file.size / 1024 / 1024).toFixed(2) + ' MB');
+            fileInput.value = '';
+            return;
+        }
+        
+        // Update drop area to show selected file
+        updateDropAreaWithFile(file);
+        
+        // Show file preview
+        showFilePreview(file);
+    }
+}
+
+// Update drop area to show file is selected
+function updateDropAreaWithFile(file) {
+    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    // Icons based on file type
+    const icons = {
+        'pdf': 'fa-file-pdf text-red-500',
+        'docx': 'fa-file-word text-blue-500', 
+        'txt': 'fa-file-alt text-gray-500',
+        'xlsx': 'fa-file-excel text-green-500',
+        'odf': 'fa-file-pdf text-orange-500'
+    };
+    
+    const iconClass = icons[fileExtension] || 'fa-file text-gray-500';
+    
+    dropContent.innerHTML = `
+        <div class="p-6">
+            <div class="mb-4">
+                <i class="fas ${iconClass} text-6xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">
+                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                File Terpilih!
+            </h3>
+            <p class="text-gray-700 font-semibold mb-1 break-all max-w-full px-2">${file.name}</p>
+            <p class="text-sm text-gray-600 mb-4">
+                ${fileExtension.toUpperCase()} • ${fileSize} MB
+            </p>
+            <button type="button" 
+                    onclick="resetFileInput()"
+                    class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition duration-300">
+                <i class="fas fa-times mr-2"></i>
+                Ganti File
+            </button>
+        </div>
+    `;
+}
+
+// Reset file input
+function resetFileInput() {
+    fileInput.value = '';
+    
+    // Restore original drop area content
+    dropContent.innerHTML = `
+        <div class="mb-4">
+            <i class="fas fa-cloud-upload-alt text-6xl text-purple-400 animate-bounce"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+            <i class="fas fa-hand-pointer mr-2"></i>
+            Drag & Drop File di Sini
+        </h3>
+        <p class="text-gray-600 mb-4">atau</p>
+        <button type="button" 
+                onclick="document.getElementById('file').click()"
+                class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300">
+            <i class="fas fa-folder-open mr-2"></i>
+            Browse File
+        </button>
+        <p class="text-xs text-gray-500 mt-4">
+            <i class="fas fa-info-circle mr-1"></i>
+            Maksimal 10MB • PDF, DOCX, TXT, XLSX, ODF
+        </p>
+    `;
+    
+    // Hide preview
+    const preview = document.getElementById('file-preview');
+    preview.classList.add('hidden');
+}
+
+// ===== FILE PREVIEW FUNCTIONALITY =====
+
+function showFilePreview(file) {
     const preview = document.getElementById('file-preview');
     const fileName = document.getElementById('file-name');
     const fileInfo = document.getElementById('file-info');
@@ -257,57 +485,60 @@ function showFilePreview(input) {
     const textPreview = document.getElementById('text-preview');
     const textContent = document.getElementById('text-content');
     
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        const fileSize = (file.size / 1024 / 1024).toFixed(2);
-        const fileExtension = file.name.split('.').pop().toLowerCase();
-        
-        // Update file info
-        fileName.textContent = file.name;
-        fileInfo.textContent = `Format: ${fileExtension.toUpperCase()} • Ukuran: ${fileSize} MB`;
-        
-        // Update icon based on file type
-        const icons = {
-            'pdf': 'fas fa-file-pdf',
-            'docx': 'fas fa-file-word', 
-            'txt': 'fas fa-file-alt',
-            'xlsx': 'fas fa-file-excel',
-            'odf': 'fas fa-file-pdf'
+    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    // Update file info
+    fileName.textContent = file.name;
+    fileInfo.textContent = `Format: ${fileExtension.toUpperCase()} • Ukuran: ${fileSize} MB`;
+    
+    // Update icon based on file type
+    const icons = {
+        'pdf': 'fas fa-file-pdf',
+        'docx': 'fas fa-file-word', 
+        'txt': 'fas fa-file-alt',
+        'xlsx': 'fas fa-file-excel',
+        'odf': 'fas fa-file-pdf'
+    };
+    
+    // Clear previous classes and set new icon
+    fileIcon.className = `text-4xl ${icons[fileExtension] || 'fas fa-file'}`;
+    fileIcon.style.color = '#570C49';
+    
+    // Show text preview for TXT files
+    if (fileExtension === 'txt' && file.size < 1024 * 1024) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const content = e.target.result;
+            const preview = content.length > 300 ? content.substring(0, 300) + '...' : content;
+            textContent.textContent = preview;
+            textPreview.classList.remove('hidden');
         };
-        
-        // Clear previous classes and set new icon
-        fileIcon.className = `text-4xl ${icons[fileExtension] || 'fas fa-file'}`;
-        fileIcon.style.color = '#570C49';
-        
-        // Show text preview for TXT files
-        if (fileExtension === 'txt' && file.size < 1024 * 1024) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const content = e.target.result;
-                const preview = content.length > 300 ? content.substring(0, 300) + '...' : content;
-                textContent.textContent = preview;
-                textPreview.classList.remove('hidden');
-            };
-            reader.readAsText(file);
-        } else {
-            textPreview.classList.add('hidden');
-        }
-        
-        // Show preview with animation
-        preview.classList.remove('hidden');
-        setTimeout(() => {
-            preview.style.opacity = '1';
-        }, 100);
-        
+        reader.readAsText(file);
     } else {
-        preview.classList.add('hidden');
+        textPreview.classList.add('hidden');
     }
+    
+    // Show preview with animation
+    preview.classList.remove('hidden');
+    setTimeout(() => {
+        preview.style.opacity = '1';
+    }, 100);
 }
 
-// Add some animation to the preview
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     const preview = document.getElementById('file-preview');
     preview.style.transition = 'opacity 0.3s ease-in-out';
     preview.style.opacity = '0';
+    
+    // Add click handler to entire drop area
+    dropArea.addEventListener('click', function(e) {
+        // Don't trigger if clicking the browse button or change file button
+        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
+            fileInput.click();
+        }
+    });
 });
 </script>
+@endsection

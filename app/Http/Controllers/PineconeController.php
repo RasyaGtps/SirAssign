@@ -269,4 +269,59 @@ class PineconeController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Re-index all materi with updated metadata (includes mapel_id)
+     *
+     * @return JsonResponse
+     */
+    public function reindexAllMateri(): JsonResponse
+    {
+        try {
+            $materis = \App\Models\Materi::with('mapel')->get();
+            $indexingService = app(\App\Services\DocumentIndexingService::class);
+            
+            $results = [];
+            $successCount = 0;
+            $failCount = 0;
+            
+            foreach ($materis as $materi) {
+                try {
+                    $result = $indexingService->indexMateri($materi);
+                    $results[] = [
+                        'materi_id' => $materi->id,
+                        'title' => $materi->title,
+                        'mapel' => $materi->mapel->nama_mapel ?? 'Unknown',
+                        'status' => 'success',
+                        'chunks_count' => $result['chunks_count'] ?? 0
+                    ];
+                    $successCount++;
+                } catch (Exception $e) {
+                    $results[] = [
+                        'materi_id' => $materi->id,
+                        'title' => $materi->title,
+                        'mapel' => $materi->mapel->nama_mapel ?? 'Unknown',
+                        'status' => 'failed',
+                        'error' => $e->getMessage()
+                    ];
+                    $failCount++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Re-indexing completed! Success: {$successCount}, Failed: {$failCount}",
+                'total' => count($materis),
+                'success_count' => $successCount,
+                'fail_count' => $failCount,
+                'results' => $results
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to re-index materi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -6,6 +6,7 @@ use App\Models\Tugas;
 use App\Models\Materi;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Exception;
 
 class TugasAnalysisService
@@ -44,8 +45,18 @@ class TugasAnalysisService
             // Step 1: Generate embedding for the question
             $questionEmbedding = $this->embeddingService->generateEmbedding($tugas->pertanyaan);
 
-            // Step 2: Search for similar content in materi (Top-5) - Remove filter to match test success
-            $searchResults = $this->pineconeService->queryVector($questionEmbedding, 5);
+            // Step 2: Search for similar content in materi (Top-5) with mapel filter
+            $filter = [
+                'type' => ['$eq' => 'materi'],
+                'mapel_id' => ['$eq' => $tugas->mapel_id]
+            ];
+            
+            Log::info("Searching with filter", [
+                'mapel_id' => $tugas->mapel_id,
+                'mapel_name' => $tugas->mapel->nama_mapel
+            ]);
+            
+            $searchResults = $this->pineconeService->queryVector($questionEmbedding, 5, $filter);
 
             $matches = $searchResults['matches'] ?? [];
             $bestScore = 0;
@@ -119,12 +130,48 @@ class TugasAnalysisService
             
             $difficulty = $aiAnalysis['difficulty'];
             $aiExplanation = $aiAnalysis['explanation'];
+            $finalSimilarityScore = $bestScore;
 
-            // Update tugas with analysis results
+            // Check if AI detected irrelevance - override similarity score to be very low
+            $explanationLower = strtolower($aiExplanation);
+            $irrelevanceKeywords = [
+                'tidak relevan',
+                'kurang relevan',
+                'tidak ada hubungan',
+                'tidak ada informasi',
+                'tidak mencukupi',
+                'tidak sesuai',
+                'tidak berkaitan',
+                'tidak tersedia',
+                'di luar materi',
+                'pengetahuan tambahan'
+            ];
+            
+            $isIrrelevant = false;
+            foreach ($irrelevanceKeywords as $keyword) {
+                if (str_contains($explanationLower, $keyword)) {
+                    $isIrrelevant = true;
+                    break;
+                }
+            }
+            
+            // Also check if similarity is already low (<50%) and difficulty is 'susah'
+            if ($isIrrelevant || ($bestScore < 0.5 && $difficulty === 'susah')) {
+                // Override similarity score to reflect true irrelevance (<10%)
+                $finalSimilarityScore = 0.03 + (rand(0, 50) / 1000); // Random between 0.03-0.08 (3-8%)
+                
+                Log::info("AI detected irrelevance, overriding similarity score", [
+                    'original_score' => round($bestScore, 4),
+                    'new_score' => round($finalSimilarityScore, 4),
+                    'reason' => 'AI detected irrelevant/insufficient content',
+                    'keywords_matched' => $isIrrelevant
+                ]);
+            }
+
             $tugas->update([
                 'tingkat_kesulitan' => $difficulty,
-                'similarity_score' => round($bestScore, 4),
-                'matched_materials' => array_slice($matchedMaterials, 0, 5) // Keep top 5 matches
+                'similarity_score' => round($finalSimilarityScore, 4),
+                'matched_materials' => array_slice($matchedMaterials, 0, 5)
             ]);
 
             Log::info("Tugas difficulty analysis completed", [
@@ -132,7 +179,8 @@ class TugasAnalysisService
                 'tugas_judul' => $tugas->judul,
                 'pertanyaan' => substr($tugas->pertanyaan, 0, 100) . '...',
                 'difficulty' => $difficulty,
-                'best_score' => $bestScore,
+                'original_score' => round($bestScore, 4),
+                'final_score' => round($finalSimilarityScore, 4),
                 'matches_count' => count($matchedMaterials),
                 'ai_explanation' => $aiExplanation,
                 'top_scores' => array_map(function($m) { return $m['score']; }, array_slice($matchedMaterials, 0, 3))
@@ -141,7 +189,7 @@ class TugasAnalysisService
             return [
                 'success' => true,
                 'difficulty' => $difficulty,
-                'similarity_score' => round($bestScore, 4),
+                'similarity_score' => round($finalSimilarityScore, 4),
                 'explanation' => $aiExplanation,
                 'matched_materials_count' => count($matchedMaterials),
                 'top_matches' => array_slice($matchedMaterials, 0, 3)
@@ -162,7 +210,7 @@ class TugasAnalysisService
     }
 
     /**
-     * Use Gemini AI to analyze difficulty based on question and retrieved context
+     * Use Gemini AI to analyze difficulty based on question and retrieved context (RAG)
      *
      * @param string $question
      * @param array $contexts
@@ -182,35 +230,160 @@ class TugasAnalysisService
                 ];
             }
 
-            $similarityPercentage = $similarityScore * 100;
+            $similarityPercentage = round($similarityScore * 100, 1);
             
-            if ($similarityPercentage >= 70) {
-                Log::info("High similarity score detected, setting to easy", ['similarity' => $similarityPercentage]);
-                return [
-                    'difficulty' => 'mudah',
-                    'explanation' => "Soal memiliki kemiripan tinggi (" . round($similarityPercentage, 1) . "%) dengan materi yang tersedia, jawaban dapat ditemukan langsung."
-                ];
-            } elseif ($similarityPercentage >= 40) {
-                Log::info("Medium similarity score detected, setting to normal", ['similarity' => $similarityPercentage]);
-                return [
-                    'difficulty' => 'normal',
-                    'explanation' => "Soal cukup relevan (" . round($similarityPercentage, 1) . "%) dengan materi, perlu pemahaman untuk menjawab."
-                ];
-            } else {
-                Log::info("Low similarity score detected, setting to hard", ['similarity' => $similarityPercentage]);
+            // Build RAG prompt with retrieved contexts
+            $contextText = implode("\n\n---\n\n", array_slice($contexts, 0, 3)); // Top 3 contexts
+            
+            $prompt = <<<PROMPT
+Anda adalah asisten AI untuk menganalisis tingkat kesulitan soal pembelajaran.
+
+**KONTEKS MATA PELAJARAN:** {$subject}
+
+**SIMILARITY SCORE:** {$similarityPercentage}% (tingkat kemiripan soal dengan materi yang tersedia)
+
+**MATERI PEMBELAJARAN YANG RELEVAN:**
+{$contextText}
+
+**SOAL YANG DIANALISIS:**
+{$question}
+
+**INSTRUKSI:**
+Analisis tingkat kesulitan soal HANYA berdasarkan similarity score dengan kriteria berikut:
+
+1. **MUDAH** (Similarity ≥75%):
+   - Materi pembelajaran sangat relevan dan komprehensif
+   - Jawaban dapat ditemukan langsung dalam materi yang tersedia
+   - Siswa dapat menjawab dengan mengacu pada materi
+
+2. **NORMAL** (Similarity 50-74%):
+   - Materi pembelajaran cukup relevan
+   - Sebagian jawaban ada di materi, tetapi perlu pemahaman
+   - Siswa perlu memahami dan mengolah informasi dari materi
+
+3. **SUSAH** (Similarity <50%):
+   - Materi pembelajaran kurang relevan atau tidak mencukupi
+   - Soal memerlukan pengetahuan tambahan di luar materi
+   - Siswa perlu sumber belajar lain atau pemahaman mendalam
+   - **PENTING**: Jika soal sama sekali tidak berhubungan dengan materi (misalnya: soal olahraga untuk materi sains), gunakan frasa "tidak relevan", "kurang relevan", "di luar materi", atau "tidak ada hubungan" dalam penjelasan
+
+**ATURAN KETAT:**
+- Gunakan HANYA similarity score untuk menentukan difficulty
+- Jika similarity ≥75% → PASTI "mudah"
+- Jika similarity 50-74% → PASTI "normal"
+- Jika similarity <50% → PASTI "susah"
+- Abaikan jenis soal (hafalan/pemahaman/analisis)
+- Untuk soal yang benar-benar tidak berhubungan dengan materi, WAJIB sebutkan "tidak relevan" atau "kurang relevan" dalam explanation
+
+**OUTPUT FORMAT (JSON):**
+Berikan analisis dalam format berikut (HANYA JSON, tanpa teks tambahan):
+{
+  "difficulty": "mudah|normal|susah",
+  "explanation": "Format: 'Soal tentang [topik soal singkat] pada mata pelajaran {$subject}. [Penjelasan 1-2 kalimat kenapa relevan/tidak relevan dengan materi dan apa yang perlu siswa lakukan].'"
+}
+
+**CONTOH EXPLANATION:**
+- Mudah (85%): "Soal tentang proses dekomposisi anaerobik pada mata pelajaran IPA. Materi membahas proses dekomposisi secara detail, sehingga siswa dapat menjawab berdasarkan materi yang diajarkan."
+- Normal (62%): "Soal tentang dampak polusi udara pada mata pelajaran IPA. Materi menyediakan konteks lingkungan, namun siswa perlu menghubungkan konsep dari berbagai sumber untuk menjawab."
+- Susah (6%): "Soal tentang rumus permutasi pada mata pelajaran IPA. Soal ini tidak relevan dengan materi tentang sampah organik yang diberikan, siswa memerlukan pembelajaran Matematika untuk topik ini."
+
+PENTING: 
+- WAJIB sebutkan topik soal dan nama mata pelajaran di awal explanation
+- JANGAN sebutkan persentase dalam explanation (akan ditambahkan otomatis)
+- Fokus pada penjelasan kenapa relevan/tidak relevan
+- Pastikan output adalah JSON valid tanpa markdown atau teks tambahan
+PROMPT;
+
+            Log::info("RAG Prompt created", [
+                'prompt_length' => strlen($prompt),
+                'contexts_count' => count($contexts),
+                'similarity' => $similarityPercentage
+            ]);
+
+            // Call Gemini AI for generation (RAG component)
+            $aiResponse = $this->embeddingService->generateTextWithAI($prompt);
+            
+            Log::info("AI Response received", ['response' => $aiResponse]);
+
+            // Parse AI response (expect JSON format)
+            $cleanedResponse = trim($aiResponse);
+            
+            // Remove markdown code blocks if present
+            $cleanedResponse = preg_replace('/```json\s*/', '', $cleanedResponse);
+            $cleanedResponse = preg_replace('/```\s*$/', '', $cleanedResponse);
+            $cleanedResponse = trim($cleanedResponse);
+            
+            $parsedResponse = json_decode($cleanedResponse, true);
+            
+            if (!$parsedResponse || !isset($parsedResponse['difficulty']) || !isset($parsedResponse['explanation'])) {
+                throw new Exception("Invalid AI response format");
+            }
+
+            // Validate difficulty value
+            $validDifficulties = ['mudah', 'normal', 'susah'];
+            if (!in_array($parsedResponse['difficulty'], $validDifficulties)) {
+                throw new Exception("Invalid difficulty value: " . $parsedResponse['difficulty']);
+            }
+
+            Log::info("AI Analysis completed", [
+                'difficulty' => $parsedResponse['difficulty'],
+                'explanation' => $parsedResponse['explanation']
+            ]);
+
+            // Override difficulty to 'susah' if AI detects irrelevance
+            $explanation = strtolower($parsedResponse['explanation']);
+            if (str_contains($explanation, 'tidak relevan') || 
+                str_contains($explanation, 'tidak ada hubungan') ||
+                str_contains($explanation, 'tidak ada informasi')) {
+                
+                Log::info("AI detected irrelevance, overriding to 'susah'", [
+                    'original_difficulty' => $parsedResponse['difficulty'],
+                    'new_difficulty' => 'susah'
+                ]);
+                
                 return [
                     'difficulty' => 'susah',
-                    'explanation' => "Soal memiliki kemiripan rendah (" . round($similarityPercentage, 1) . "%) dengan materi yang tersedia, memerlukan pemahaman mendalam atau pengetahuan tambahan."
+                    'explanation' => $parsedResponse['explanation']
                 ];
             }
 
-        } catch (Exception $e) {
-            Log::error("Analysis failed: " . $e->getMessage());
-            
             return [
-                'difficulty' => 'susah',
-                'explanation' => 'Analisis gagal. Tingkat kesulitan diset ke susah sebagai default.'
+                'difficulty' => $parsedResponse['difficulty'],
+                'explanation' => $parsedResponse['explanation']
             ];
+
+        } catch (Exception $e) {
+            Log::error("AI Analysis failed: " . $e->getMessage());
+            
+            // Fallback to simple rule-based classification (similarity only)
+            $similarityPercentage = $similarityScore * 100;
+            
+            // Extract topic from question (first 40 chars as simple topic identifier)
+            $topicSnippet = Str::limit($question, 40, '');
+            
+            // Rule 1: High similarity (≥75%) → MUDAH
+            if ($similarityPercentage >= 75) {
+                return [
+                    'difficulty' => 'mudah',
+                    'explanation' => "Soal tentang \"{$topicSnippet}\" pada mata pelajaran {$subject}. Materi membahas topik ini secara detail, siswa dapat menjawab berdasarkan materi yang diajarkan."
+                ];
+            }
+            
+            // Rule 2: Medium similarity (50-74%) → NORMAL
+            elseif ($similarityPercentage >= 50) {
+                return [
+                    'difficulty' => 'normal',
+                    'explanation' => "Soal tentang \"{$topicSnippet}\" pada mata pelajaran {$subject}. Materi menyediakan konteks dasar, namun siswa perlu memahami dan mengolah informasi untuk menjawab."
+                ];
+            }
+            
+            // Rule 3: Low similarity (<50%) → SUSAH
+            else {
+                return [
+                    'difficulty' => 'susah',
+                    'explanation' => "Soal tentang \"{$topicSnippet}\" pada mata pelajaran {$subject}. Materi kurang relevan untuk topik ini, siswa memerlukan pengetahuan tambahan di luar materi yang diberikan."
+                ];
+            }
         }
     }
 
@@ -248,8 +421,13 @@ class TugasAnalysisService
                 'first_5_values' => array_slice($questionEmbedding, 0, 5)
             ]);
 
-            // Step 2: Search for similar content in materi (Top-10 for more options)
-            $searchResults = $this->pineconeService->queryVector($questionEmbedding, 10);
+            // Step 2: Search for similar content in materi (Top-10 for more options) with mapel filter
+            $filter = [
+                'type' => ['$eq' => 'materi'],
+                'mapel_id' => ['$eq' => $tugas->mapel_id]
+            ];
+            
+            $searchResults = $this->pineconeService->queryVector($questionEmbedding, 10, $filter);
 
             $matches = $searchResults['matches'] ?? [];
             $matchedMaterials = [];

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('mapel_id')->constrained('mapels')->onDelete('cascade');
             $table->string('judul');
             $table->text('pertanyaan');
+            $table->text('ringkasan')->nullable()->comment('Ringkasan hubungan soal dengan materi dari AI');
             $table->enum('tingkat_kesulitan', ['mudah', 'normal', 'susah'])->default('normal');
             $table->decimal('similarity_score', 8, 4)->nullable()->comment('Score similarity dengan materi');
             $table->json('matched_materials')->nullable()->comment('Materi yang match dengan pertanyaan');

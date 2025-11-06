@@ -196,6 +196,63 @@ class EmbeddingService
     }
 
     /**
+     * Generate text using Gemini AI (RAG Generation component)
+     *
+     * @param string $prompt
+     * @return string
+     */
+    public function generateTextWithAI(string $prompt): string
+    {
+        try {
+            $geminiGenerateUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+            
+            $response = Http::timeout(30)->post($geminiGenerateUrl . '?key=' . $this->geminiApiKey, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'text' => $prompt
+                            ]
+                        ]
+                    ]
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.3,
+                    'topK' => 40,
+                    'topP' => 0.95,
+                    'maxOutputTokens' => 1024,
+                ]
+            ]);
+
+            if ($response->failed()) {
+                Log::error('Gemini text generation failed', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+                throw new Exception('Gemini generation failed: ' . $response->body());
+            }
+
+            $result = $response->json();
+            
+            Log::info('Gemini API response', ['result' => $result]);
+            
+            if (!isset($result['candidates'][0]['content']['parts'][0]['text'])) {
+                throw new Exception('Invalid Gemini generation response format');
+            }
+
+            $generatedText = $result['candidates'][0]['content']['parts'][0]['text'];
+            
+            Log::info('Gemini generated text', ['text' => substr($generatedText, 0, 200)]);
+
+            return $generatedText;
+
+        } catch (Exception $e) {
+            Log::error('Gemini generation error: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
      * Generate deterministic dummy embedding (1024 dimensions) as fallback
      *
      * @param string $text
